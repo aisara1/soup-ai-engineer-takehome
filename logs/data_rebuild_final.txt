@@ -1,0 +1,162 @@
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Loading dataset...
+Generating train split:   0%|          | 0/112052 [00:00<?, ? examples/s]Generating train split:   1%|          | 1000/112052 [00:00<00:23, 4749.53 examples/s]Generating train split:   5%|▌         | 6000/112052 [00:00<00:04, 22191.97 examples/s]Generating train split:   9%|▉         | 10000/112052 [00:00<00:03, 25569.21 examples/s]Generating train split:  12%|█▏        | 14000/112052 [00:00<00:03, 29988.02 examples/s]Generating train split:  16%|█▌        | 18000/112052 [00:00<00:03, 31292.83 examples/s]Generating train split:  20%|█▉        | 22000/112052 [00:00<00:02, 31589.76 examples/s]Generating train split:  23%|██▎       | 26000/112052 [00:00<00:02, 32163.86 examples/s]Generating train split:  28%|██▊       | 31000/112052 [00:01<00:02, 27083.06 examples/s]Generating train split:  32%|███▏      | 36000/112052 [00:01<00:02, 29317.67 examples/s]Generating train split:  37%|███▋      | 41000/112052 [00:01<00:02, 31513.14 examples/s]Generating train split:  40%|████      | 45000/112052 [00:01<00:02, 25477.01 examples/s]Generating train split:  45%|████▍     | 50000/112052 [00:01<00:02, 29527.09 examples/s]Generating train split:  51%|█████     | 57000/112052 [00:01<00:01, 35879.93 examples/s]Generating train split:  56%|█████▌    | 63000/112052 [00:02<00:01, 38401.90 examples/s]Generating train split:  61%|██████    | 68000/112052 [00:02<00:01, 35441.04 examples/s]Generating train split:  65%|██████▌   | 73000/112052 [00:02<00:01, 29974.40 examples/s]Generating train split:  70%|██████▉   | 78000/112052 [00:02<00:01, 32620.38 examples/s]Generating train split:  74%|███████▍  | 83000/112052 [00:02<00:00, 33837.34 examples/s]Generating train split:  78%|███████▊  | 87000/112052 [00:02<00:00, 33081.59 examples/s]Generating train split:  81%|████████  | 91000/112052 [00:02<00:00, 30066.68 examples/s]Generating train split:  86%|████████▌ | 96000/112052 [00:03<00:00, 30083.82 examples/s]Generating train split:  90%|█████████ | 101000/112052 [00:04<00:01, 7785.05 examples/s]Generating train split:  95%|█████████▍| 106000/112052 [00:06<00:01, 4746.46 examples/s]Generating train split: 100%|██████████| 112052/112052 [00:06<00:00, 6914.94 examples/s]Generating train split: 100%|██████████| 112052/112052 [00:06<00:00, 16137.34 examples/s]
+Generating test split:   0%|          | 0/12451 [00:00<?, ? examples/s]Generating test split:   8%|▊         | 1000/12451 [00:00<00:01, 8479.92 examples/s]Generating test split:  64%|██████▍   | 8000/12451 [00:00<00:00, 41313.30 examples/s]Generating test split: 100%|██████████| 12451/12451 [00:00<00:00, 46906.18 examples/s]
+source rows: 112052
+{
+  "repo": "d0rj/full-hh-rlhf-ru",
+  "revision": "fd4a069df1b99329527389101f48540140478ff7",
+  "source_split": "train",
+  "seed": 42,
+  "rows_scanned": 984,
+  "drops": {
+    "R1_empty": 1,
+    "R2_identical": 6,
+    "R3_low_cyrillic": 328,
+    "R4_over_3000_chars": 37,
+    "R5_dup_exact_prompt": 0,
+    "R6_completion_overlap_with_eval": 4,
+    "R7_prompt_over_500_tok": 54,
+    "R8_total_over_1000_tok": 0,
+    "R9_boundary_tokenization_mismatch": 4
+  },
+  "drop_counter_scope": "Drop counts apply only to rows scanned until 50 eval + 500 train rows were collected; they are not full-dataset prevalence estimates.",
+  "selection": {
+    "eval": "first 50 eligible rows after deterministic shuffle",
+    "train": "next 500 eligible rows after deterministic shuffle; train completions are excluded if they exactly overlap eval completions"
+  },
+  "filters": {
+    "MAX_CHARS": 3000,
+    "MIN_CYR": 0.5
+  },
+  "tokenizer": {
+    "id": "Qwen/Qwen2.5-1.5B-Instruct",
+    "revision": "989aa7980e4cf806f80c7fef2b1adb7bc71aa306",
+    "transformers": "5.17.0",
+    "tokenizers": "0.23.2",
+    "rendering": "raw text; experimentally verified with TRL 0.29.1: is_conversational=False and chat template not applied",
+    "rules": {
+      "PROMPT_TOK_MAX": 500,
+      "TOTAL_TOK_MAX": 1000,
+      "EOS_BUDGET": 1,
+      "add_special_tokens": false
+    }
+  },
+  "eval": {
+    "n": 50,
+    "sha256": "ae130e18936df26dbd9db8921f2c131bff394236cb620e7ec2c12ed834c6b4c2",
+    "char_stats": {
+      "prompt": {
+        "p50": 398,
+        "p90": 1258,
+        "p99": 1502,
+        "max": 1517
+      },
+      "chosen": {
+        "p50": 272,
+        "p90": 910,
+        "p99": 1264,
+        "max": 1295
+      },
+      "rejected": {
+        "p50": 288,
+        "p90": 945,
+        "p99": 1858,
+        "max": 2235
+      },
+      "frac_chosen_longer": 0.6
+    }
+  },
+  "train": {
+    "n": 500,
+    "sha256": "175f3ad1ae66034c557f7d54efe30121c6e5b7e99169127539dacb2207e3df67",
+    "char_stats": {
+      "prompt": {
+        "p50": 374,
+        "p90": 1141,
+        "p99": 1474,
+        "max": 1687
+      },
+      "chosen": {
+        "p50": 298,
+        "p90": 804,
+        "p99": 1291,
+        "max": 1532
+      },
+      "rejected": {
+        "p50": 256,
+        "p90": 778,
+        "p99": 1297,
+        "max": 1438
+      },
+      "frac_chosen_longer": 0.556
+    }
+  },
+  "token_stats": {
+    "train": {
+      "prompt_tok": {
+        "50": 129,
+        "90": 385,
+        "99": 476,
+        "100": 495
+      },
+      "total_tok_incl_eos": {
+        "50": 295,
+        "90": 542,
+        "99": 762,
+        "100": 925
+      }
+    },
+    "eval": {
+      "prompt_tok": {
+        "50": 122,
+        "90": 401,
+        "99": 451,
+        "100": 457
+      },
+      "total_tok_incl_eos": {
+        "50": 291,
+        "90": 645,
+        "99": 831,
+        "100": 872
+      }
+    }
+  },
+  "train_eval_overlap": {
+    "prompt": 0,
+    "chosen": 0,
+    "rejected": 0,
+    "any_completion": 0
+  },
+  "prompts_ending_with_assistant_marker": {
+    "train": 500,
+    "eval": 50
+  },
+  "top_prompt_endings": {
+    "train": [
+      [
+        "Ассистент:",
+        500
+      ]
+    ],
+    "eval": [
+      [
+        "Ассистент:",
+        50
+      ]
+    ]
+  },
+  "role_marker_counts_combined": {
+    "Человек": 1133,
+    "Ассистент": 838,
+    "Помощник": 293,
+    "Human": 4,
+    "Assistant": 0
+  },
+  "superseded_note": "v1 sample without token rules is preserved in data/superseded_v1/. Initial audit found 41/500 train prompts above Soup's 512-token prompt cap; Soup 0.75.1 fallback uses keep_start, so those prompts were at risk of tail truncation. v2 adds conservative 500/1000 token filters before training."
+}
+
+WROTE:
+data/train.jsonl
+data/eval.jsonl
+data/manifest.json
