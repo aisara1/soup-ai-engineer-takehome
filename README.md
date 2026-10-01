@@ -133,7 +133,7 @@ verify_training.py f44ce1a3e7f52e280bb1f9add56c15597fe99d46bba008ec8da932a63d89b
 model weights      dd924a11b4c220f385b51ffa522daea7c9f3d850e31b162bb5661df483c6d3ee
 ```
 
-The final adapter SHA256 was `78069eebd943d6bb433652581d6562698c5693bc32520c4d22169521e5ad8c42`. The large `adapter_model.safetensors` file is intentionally omitted from this LIGHT submission package; its verified SHA256 from the full run artifact is `78069eebd943d6bb433652581d6562698c5693bc32520c4d22169521e5ad8c42`.
+The final adapter SHA256 was `78069eebd943d6bb433652581d6562698c5693bc32520c4d22169521e5ad8c42`. The adapter weights (~70 MB) are not included in this repository; their verified SHA256 is 78069eebd943d6bb433652581d6562698c5693bc32520c4d22169521e5ad8c42. They are available on request.
 
 ## Notes on the Colab reset
 
