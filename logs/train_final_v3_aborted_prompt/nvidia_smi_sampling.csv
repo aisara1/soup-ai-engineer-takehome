@@ -1,0 +1,9 @@
+timestamp, name, memory.used [MiB], memory.total [MiB], utilization.gpu [%]
+2026/10/01 08:02:32.903, Tesla T4, 0 MiB, 15360 MiB, 0 %
+2026/10/01 08:02:33.911, Tesla T4, 0 MiB, 15360 MiB, 0 %
+2026/10/01 08:02:34.912, Tesla T4, 0 MiB, 15360 MiB, 0 %
+2026/10/01 08:02:35.922, Tesla T4, 0 MiB, 15360 MiB, 0 %
+2026/10/01 08:02:36.929, Tesla T4, 0 MiB, 15360 MiB, 0 %
+2026/10/01 08:02:37.937, Tesla T4, 0 MiB, 15360 MiB, 0 %
+2026/10/01 08:02:38.943, Tesla T4, 0 MiB, 15360 MiB, 0 %
+2026/10/01 08:02:39.948, Tesla T4, 3 MiB, 15360 MiB, 0 %

@@ -1,0 +1,92 @@
+Loading config from soup.yaml...
+╭─────────────────────────────── Training Setup ───────────────────────────────╮
+│ Device:  Tesla T4                                                            │
+│ Memory:  14.6 GB                                                             │
+│ Model:   /content/models/qwen2.5-1.5b-pinned                                 │
+│ Task:    dpo                                                                 │
+│ Backend: transformers                                                        │
+│ LoRA:    r=16, alpha=32                                                      │
+│ Quant:   none                                                                │
+│ Seed:    42                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────╯
+Loading dataset...
+Loaded: 500 train samples
+Run ID: run_20261001_080403_5e5f8a27
+Setting up model + trainer...
+Loading tokenizer: /content/models/qwen2.5-1.5b-pinned
+╭────────────────────── Layer streaming disk pre-flight ───────────────────────╮
+│ HF/local source: 3.09 GB                                                     │
+│ Soup materialized copy: 0.00 GB (no write required)                          │
+│ Layer-shard cache: 3.09 GB (write required)                                  │
+│ Projected total on disk: 6.17 GB                                             │
+│ Additional writes before training: 3.09 GB                                   │
+│ Free on target volume (layer-shard cache): 56.79 GB                          │
+╰──────────────────────────────────────────────────────────────────────────────╯
+Preparing layer shards -> 
+/root/.soup/layer-stream/content__models__qwen2.5-1.5b-pinned
+Re-sharding layer cache: cache index is missing or unreadable.
+╭─────────────────────────── training.stream_layers ───────────────────────────╮
+│ Layer streaming BETA — arch qwen2, tier ram                                  │
+│   base store   2.62 GB across 28 layers (pinned)                             │
+│   VRAM buffers 2 x 94 MB + 1 x 0 MB large-layer slot = 187 MB                │
+│   resident     467 MB extras + adapters                                      │
+│   peak VRAM    ~10.06 GB at batch 2 x seq 1024 (4 rows — chosen+rejected are │
+│ one concatenated tensor) (logits 8.71 GB)                                    │
+│   free VRAM    15.51 GB                                                      │
+│   forecast     1544-2271 tok/s — a compute-bound bound, not a promise        │
+│                (from 21.04 TFLOPS measured on this card now using float16 @  │
+│ 990 MHz)                                                                     │
+│   ! accumulating 4x at batch 2: the base is re-read once per micro-batch.    │
+│ Per token that is free, but reaching effective batch 8 by raising            │
+│ training.batch_size instead measured ~2.5x faster. Accumulation holds peak   │
+│ VRAM flat, so raise batch_size while the budget above allows, then           │
+│ accumulate for the rest.                                                     │
+╰──────────────────────────────────────────────────────────────────────────────╯
+Layer streaming is BETA: slower than resident training, but this model may not 
+run resident on this card at all.
+expandable_segments allocator hint not enabled: CUDA was already initialised 
+before Soup could set it — the allocator reads PYTORCH_CUDA_ALLOC_CONF once, at 
+context creation
+[transformers] `torch_dtype` is deprecated! Use `dtype` instead!
+Layer streaming ready: 28 layers, 2.62 GB pinned RAM store, 2 x 94 MB decoder 
+buffers + 1 x 0 MB large-layer slot
+LoRA applied: 18,464,768 trainable / 1,543,714,304 total (1.20%)
+Adding EOS to train dataset:   0%|          | 0/500 [00:00<?, ? examples/s]Adding EOS to train dataset:  91%|█████████▏| 457/500 [00:00<00:00, 4478.10 examples/s]Adding EOS to train dataset: 100%|██████████| 500/500 [00:00<00:00, 2974.17 examples/s]
+Tokenizing train dataset:   0%|          | 0/500 [00:00<?, ? examples/s]Tokenizing train dataset:   7%|▋         | 37/500 [00:00<00:01, 360.85 examples/s]Tokenizing train dataset:  17%|█▋        | 85/500 [00:00<00:00, 423.90 examples/s]Tokenizing train dataset:  27%|██▋       | 133/500 [00:00<00:00, 444.28 examples/s]Tokenizing train dataset:  36%|███▌      | 179/500 [00:00<00:00, 447.47 examples/s]Tokenizing train dataset:  45%|████▌     | 225/500 [00:00<00:00, 450.10 examples/s]Tokenizing train dataset:  55%|█████▌    | 277/500 [00:00<00:00, 472.66 examples/s]Tokenizing train dataset:  66%|██████▌   | 328/500 [00:00<00:00, 482.98 examples/s]Tokenizing train dataset:  76%|███████▌  | 380/500 [00:00<00:00, 490.67 examples/s]Tokenizing train dataset:  90%|█████████ | 450/500 [00:00<00:00, 471.51 examples/s]Tokenizing train dataset: 100%|██████████| 500/500 [00:01<00:00, 391.42 examples/s]Tokenizing train dataset: 100%|██████████| 500/500 [00:01<00:00, 431.37 examples/s]
+[transformers] The model is already on multiple devices. Skipping the move to device specified in `args`.
+Map:   0%|          | 0/500 [00:00<?, ? examples/s]Map: 100%|██████████| 500/500 [00:00<00:00, 4582.49 examples/s]Map: 100%|██████████| 500/500 [00:00<00:00, 4402.47 examples/s]
+Training started!
+
+[transformers] The tokenizer has new PAD/BOS/EOS tokens that differ from the model config and generation config. The model config and generation config were aligned accordingly, being updated with the tokenizer's values. Updated tokens: {'bos_token_id': None, 'pad_token_id': 151643}.
+  0%|          | 0/63 [00:00<?, ?it/s]  2%|▏         | 1/63 [00:11<11:54, 11.53s/it][W1001 08:06:13.035385157 CUDACachingAllocator.cpp:3934] memory allocation failed with OOM on device 0 while trying to allocate 1453326336 bytes (free: 893190144, total: 15637086208).
+  3%|▎         | 2/63 [00:19<09:47,  9.64s/it]  5%|▍         | 3/63 [00:30<09:53,  9.89s/it]  6%|▋         | 4/63 [00:37<08:47,  8.94s/it]  8%|▊         | 5/63 [00:46<08:34,  8.87s/it][W1001 08:06:49.560241350 CUDACachingAllocator.cpp:3934] memory allocation failed with OOM on device 0 while trying to allocate 1853882368 bytes (free: 784138240, total: 15637086208).
+ 10%|▉         | 6/63 [00:54<08:10,  8.60s/it] 11%|█         | 7/63 [01:03<08:03,  8.64s/it] 13%|█▎        | 8/63 [01:11<07:55,  8.64s/it] 14%|█▍        | 9/63 [01:18<07:12,  8.02s/it] 16%|█▌        | 10/63 [01:27<07:17,  8.25s/it]                                                16%|█▌        | 10/63 [01:27<07:17,  8.25s/it] 17%|█▋        | 11/63 [01:33<06:38,  7.66s/it] 19%|█▉        | 12/63 [01:41<06:29,  7.64s/it] 21%|██        | 13/63 [01:47<06:07,  7.36s/it] 22%|██▏       | 14/63 [01:57<06:41,  8.20s/it] 24%|██▍       | 15/63 [02:04<06:15,  7.82s/it] 25%|██▌       | 16/63 [02:11<05:55,  7.57s/it] 27%|██▋       | 17/63 [02:19<05:42,  7.45s/it] 29%|██▊       | 18/63 [02:24<05:13,  6.98s/it] 30%|███       | 19/63 [02:31<05:04,  6.92s/it] 32%|███▏      | 20/63 [02:39<05:15,  7.33s/it]                                                32%|███▏      | 20/63 [02:39<05:15,  7.33s/it] 33%|███▎      | 21/63 [02:46<04:52,  6.96s/it] 35%|███▍      | 22/63 [02:52<04:35,  6.71s/it] 37%|███▋      | 23/63 [02:58<04:26,  6.66s/it] 38%|███▊      | 24/63 [03:06<04:34,  7.04s/it] 40%|███▉      | 25/63 [03:11<04:07,  6.51s/it] 41%|████▏     | 26/63 [03:21<04:34,  7.42s/it] 43%|████▎     | 27/63 [03:29<04:31,  7.53s/it][W1001 08:09:31.579535286 CUDACachingAllocator.cpp:3934] memory allocation failed with OOM on device 0 while trying to allocate 1960837120 bytes (free: 731709440, total: 15637086208).
+ 44%|████▍     | 28/63 [03:37<04:31,  7.76s/it] 46%|████▌     | 29/63 [03:46<04:31,  7.99s/it] 48%|████▊     | 30/63 [03:50<03:50,  6.99s/it]                                                48%|████▊     | 30/63 [03:50<03:50,  6.99s/it] 49%|████▉     | 31/63 [03:56<03:32,  6.64s/it] 51%|█████     | 32/63 [04:04<03:34,  6.93s/it] 52%|█████▏    | 33/63 [04:12<03:38,  7.29s/it] 54%|█████▍    | 34/63 [04:17<03:10,  6.57s/it] 56%|█████▌    | 35/63 [04:25<03:19,  7.11s/it] 57%|█████▋    | 36/63 [04:32<03:11,  7.09s/it] 59%|█████▊    | 37/63 [04:41<03:18,  7.62s/it] 60%|██████    | 38/63 [04:47<02:57,  7.10s/it] 62%|██████▏   | 39/63 [04:54<02:52,  7.21s/it] 63%|██████▎   | 40/63 [04:59<02:31,  6.57s/it]                                                63%|██████▎   | 40/63 [04:59<02:31,  6.57s/it] 65%|██████▌   | 41/63 [05:10<02:54,  7.93s/it] 67%|██████▋   | 42/63 [05:19<02:49,  8.09s/it] 68%|██████▊   | 43/63 [05:24<02:25,  7.29s/it] 70%|██████▉   | 44/63 [05:33<02:28,  7.80s/it] 71%|███████▏  | 45/63 [05:41<02:22,  7.89s/it] 73%|███████▎  | 46/63 [05:48<02:05,  7.40s/it] 75%|███████▍  | 47/63 [05:57<02:08,  8.05s/it] 76%|███████▌  | 48/63 [06:04<01:55,  7.67s/it][W1001 08:12:12.816193969 CUDACachingAllocator.cpp:3934] memory allocation failed with OOM on device 0 while trying to allocate 2113929216 bytes (free: 2107441152, total: 15637086208).
+ 78%|███████▊  | 49/63 [06:16<02:04,  8.90s/it] 79%|███████▉  | 50/63 [06:22<01:46,  8.15s/it]                                                79%|███████▉  | 50/63 [06:22<01:46,  8.15s/it] 81%|████████  | 51/63 [06:29<01:31,  7.61s/it][W1001 08:12:32.327736577 CUDACachingAllocator.cpp:3934] memory allocation failed with OOM on device 0 while trying to allocate 2248146944 bytes (free: 1241317376, total: 15637086208).
+ 83%|████████▎ | 52/63 [06:37<01:26,  7.86s/it] 84%|████████▍ | 53/63 [06:43<01:14,  7.44s/it] 86%|████████▌ | 54/63 [06:51<01:06,  7.40s/it] 87%|████████▋ | 55/63 [06:57<00:56,  7.10s/it] 89%|████████▉ | 56/63 [07:07<00:54,  7.82s/it] 90%|█████████ | 57/63 [07:15<00:47,  7.88s/it] 92%|█████████▏| 58/63 [07:23<00:39,  7.94s/it] 94%|█████████▎| 59/63 [07:29<00:29,  7.40s/it] 95%|█████████▌| 60/63 [07:34<00:20,  6.67s/it]                                                95%|█████████▌| 60/63 [07:34<00:20,  6.67s/it] 97%|█████████▋| 61/63 [07:44<00:15,  7.58s/it] 98%|█████████▊| 62/63 [07:50<00:07,  7.21s/it]100%|██████████| 63/63 [07:54<00:00,  6.16s/it]                                               100%|██████████| 63/63 [09:49<00:00,  6.16s/it]100%|██████████| 63/63 [09:49<00:00,  9.35s/it]
+{'loss': '0.6899', 'grad_norm': '5.871', 'learning_rate': '4.844e-05', 'entropy': '1.556', 'num_tokens': '4.863e+04', 'logits/chosen': '-2.621', 'logits/rejected': '-2.586', 'mean_token_accuracy': '0.5905', 'rewards/chosen': '0.03305', 'rewards/rejected': '0.02593', 'rewards/accuracies': '0.3375', 'rewards/margins': '0.007128', 'logps/chosen': '-214.4', 'logps/rejected': '-184.4', 'epoch': '0.16'}
+{'loss': '0.6888', 'grad_norm': '4.609', 'learning_rate': '4.222e-05', 'entropy': '1.643', 'num_tokens': '9.428e+04', 'logits/chosen': '-2.633', 'logits/rejected': '-2.601', 'mean_token_accuracy': '0.581', 'rewards/chosen': '0.1401', 'rewards/rejected': '0.1277', 'rewards/accuracies': '0.525', 'rewards/margins': '0.01235', 'logps/chosen': '-197', 'logps/rejected': '-199', 'epoch': '0.32'}
+{'loss': '0.6663', 'grad_norm': '3.892', 'learning_rate': '3.127e-05', 'entropy': '1.547', 'num_tokens': '1.372e+05', 'logits/chosen': '-2.648', 'logits/rejected': '-2.633', 'mean_token_accuracy': '0.6171', 'rewards/chosen': '0.2715', 'rewards/rejected': '0.2008', 'rewards/accuracies': '0.7125', 'rewards/margins': '0.07068', 'logps/chosen': '-215.4', 'logps/rejected': '-204.5', 'epoch': '0.48'}
+{'loss': '0.6808', 'grad_norm': '5.073', 'learning_rate': '1.873e-05', 'entropy': '1.599', 'num_tokens': '1.774e+05', 'logits/chosen': '-2.599', 'logits/rejected': '-2.637', 'mean_token_accuracy': '0.595', 'rewards/chosen': '0.3249', 'rewards/rejected': '0.281', 'rewards/accuracies': '0.5125', 'rewards/margins': '0.04392', 'logps/chosen': '-215.1', 'logps/rejected': '-216.7', 'epoch': '0.64'}
+{'loss': '0.691', 'grad_norm': '5.777', 'learning_rate': '7.776e-06', 'entropy': '1.587', 'num_tokens': '2.273e+05', 'logits/chosen': '-2.546', 'logits/rejected': '-2.529', 'mean_token_accuracy': '0.6007', 'rewards/chosen': '0.3056', 'rewards/rejected': '0.283', 'rewards/accuracies': '0.5375', 'rewards/margins': '0.02254', 'logps/chosen': '-250', 'logps/rejected': '-223.8', 'epoch': '0.8'}
+{'loss': '0.6797', 'grad_norm': '5.3', 'learning_rate': '1.147e-06', 'entropy': '1.602', 'num_tokens': '2.716e+05', 'logits/chosen': '-2.608', 'logits/rejected': '-2.579', 'mean_token_accuracy': '0.5965', 'rewards/chosen': '0.3548', 'rewards/rejected': '0.3089', 'rewards/accuracies': '0.5875', 'rewards/margins': '0.04594', 'logps/chosen': '-245.8', 'logps/rejected': '-223.8', 'epoch': '0.96'}
+{'train_runtime': '589', 'train_samples_per_second': '0.849', 'train_steps_per_second': '0.107', 'train_loss': '0.6836', 'entropy': '1.591', 'num_tokens': '2.831e+05', 'logits/chosen': '-2.625', 'logits/rejected': '-2.551', 'mean_token_accuracy': '0.6178', 'rewards/chosen': '0.3158', 'rewards/rejected': '0.2783', 'rewards/accuracies': '0.5', 'rewards/margins': '0.03744', 'logps/chosen': '-233.3', 'logps/rejected': '-282.4', 'epoch': '1'}
+╭───────────── Soup Training: /content/models/qwen2.5-1.5b-pinned ─────────────╮
+│ Epoch 1.0/1   100%                                                           │
+│ Step:  63/63                                                                 │
+│ Loss:  0.6797    LR: 1.15e-06                                                │
+│ Speed: 0.11 it/s                                                             │
+│ GPU peak: 10.2/14.6 GB                                                       │
+│ Grad:  5.2997                                                                │
+╰────────────────────────────────── Tesla T4 ──────────────────────────────────╯╭───────────────────────────── Training Complete! ─────────────────────────────╮
+│ Loss: 0.6899 -> 0.6797                                                       │
+│ Duration: 9m                                                                 │
+│ Output: output/dpo_qwen15b_stream                                            │
+│ Run ID: run_20261001_080403_5e5f8a27                                         │
+│                                                                              │
+│ Quick test:  soup chat --model output/dpo_qwen15b_stream                     │
+│ Push to HF:  soup push --model output/dpo_qwen15b_stream                     │
+│ Merge LoRA:  soup merge --adapter output/dpo_qwen15b_stream                  │
+│ Export GGUF: soup export --model output/dpo_qwen15b_stream                   │
+│ Run details: soup runs show run_20261001_080403_5e5f8a27                     │
+╰──────────────────────────────────────────────────────────────────────────────╯

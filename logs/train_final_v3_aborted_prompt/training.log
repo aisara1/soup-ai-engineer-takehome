@@ -1,0 +1,12 @@
+Loading config from soup.yaml...
+╭─────────────────────────────── Training Setup ───────────────────────────────╮
+│ Device:  Tesla T4                                                            │
+│ Memory:  14.6 GB                                                             │
+│ Model:   /content/models/qwen2.5-1.5b-pinned                                 │
+│ Task:    dpo                                                                 │
+│ Backend: transformers                                                        │
+│ LoRA:    r=16, alpha=32                                                      │
+│ Quant:   none                                                                │
+│ Seed:    42                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────╯
+Start training? [Y/n]: Aborted.

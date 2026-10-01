@@ -1,0 +1,14 @@
+=== FINAL RUN START ===
+Thu Oct  1 08:03:38 AM UTC 2026
+
+=== INPUT HASHES ===
+82ea3a7ca287bb51272f667aa1d2cdb84ccd6bdbff96d1bf8e1390da447767e3  soup.yaml
+175f3ad1ae66034c557f7d54efe30121c6e5b7e99169127539dacb2207e3df67  data/train.jsonl
+ae130e18936df26dbd9db8921f2c131bff394236cb620e7ec2c12ed834c6b4c2  data/eval.jsonl
+981595fe71f26feb321efe2bf9af8cdbc76365141daeb1f52979c85920b38553  prepare_data.py
+f44ce1a3e7f52e280bb1f9add56c15597fe99d46bba008ec8da932a63d89b822  verify_training.py
+dd924a11b4c220f385b51ffa522daea7c9f3d850e31b162bb5661df483c6d3ee  /content/models/qwen2.5-1.5b-pinned/model.safetensors
+
+=== FINAL RUN END ===
+Thu Oct  1 08:17:05 AM UTC 2026
+training exit code: 0
