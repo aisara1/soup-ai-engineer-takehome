@@ -1,0 +1,70 @@
+# SOURCE
+%%bash
+
+/content/venv312/bin/python - <<'PY' 2>&1 | tee logs/train/hf_cache_diagnostic_v2.txt
+import os
+from huggingface_hub.constants import HF_HUB_CACHE
+
+REV = "989aa7980e4cf806f80c7fef2b1adb7bc71aa306"
+
+repo = os.path.join(
+    HF_HUB_CACHE,
+    "models--Qwen--Qwen2.5-1.5B-Instruct"
+)
+snap = os.path.join(repo, "snapshots", REV)
+blob_root = os.path.realpath(os.path.join(repo, "blobs"))
+
+print("HF_HUB_CACHE:", HF_HUB_CACHE)
+print("repo:", repo)
+print("snapshot:", snap)
+print("snapshot exists:", os.path.isdir(snap))
+print("expected blob root:", blob_root)
+print()
+
+if os.path.isdir(snap):
+    print("snapshot files:")
+    for name in sorted(os.listdir(snap)):
+        p = os.path.join(snap, name)
+        print(
+            f"{name:35} "
+            f"symlink={os.path.islink(p)} "
+            f"exists={os.path.exists(p)}"
+        )
+
+    print("\nmodel.safetensors detail:")
+    p = os.path.join(snap, "model.safetensors")
+    print("path:", p)
+    print("is symlink:", os.path.islink(p))
+    if os.path.islink(p):
+        print("readlink:", os.readlink(p))
+    print("realpath:", os.path.realpath(p))
+    print(
+        "inside expected blob root:",
+        os.path.commonpath(
+            [os.path.realpath(p), blob_root]
+        ) == blob_root
+    )
+PY
+
+# OUTPUT
+HF_HUB_CACHE: /root/.cache/huggingface/hub
+repo: /root/.cache/huggingface/hub/models--Qwen--Qwen2.5-1.5B-Instruct
+snapshot: /root/.cache/huggingface/hub/models--Qwen--Qwen2.5-1.5B-Instruct/snapshots/989aa7980e4cf806f80c7fef2b1adb7bc71aa306
+snapshot exists: True
+expected blob root: /root/.cache/huggingface/hub/models--Qwen--Qwen2.5-1.5B-Instruct/blobs
+
+snapshot files:
+config.json                         symlink=True exists=True
+generation_config.json              symlink=True exists=True
+merges.txt                          symlink=True exists=True
+model.safetensors                   symlink=True exists=True
+tokenizer.json                      symlink=True exists=True
+tokenizer_config.json               symlink=True exists=True
+vocab.json                          symlink=True exists=True
+
+model.safetensors detail:
+path: /root/.cache/huggingface/hub/models--Qwen--Qwen2.5-1.5B-Instruct/snapshots/989aa7980e4cf806f80c7fef2b1adb7bc71aa306/model.safetensors
+is symlink: True
+readlink: ../../blobs/dd924a11b4c220f385b51ffa522daea7c9f3d850e31b162bb5661df483c6d3ee
+realpath: /root/.cache/huggingface/hub/blobs/46/46ea4ba5786759efecf127c64dee654df39a3f02fdeaafc67734a06574619467
+inside expected blob root: False

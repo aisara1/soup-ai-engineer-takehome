@@ -1,0 +1,34 @@
+# SOURCE
+%%writefile soup.yaml
+
+base: Qwen/Qwen2.5-1.5B-Instruct
+task: dpo
+backend: transformers
+
+data:
+  train: ./data/train.jsonl
+  format: dpo
+  max_length: 1024
+  val_split: 0.0
+
+training:
+  epochs: 1
+  lr: 5e-5
+  batch_size: 2
+  gradient_accumulation_steps: 4
+  quantization: none
+  gradient_checkpointing: true
+  stream_layers: true
+  stream_source: ram
+  stream_buffers: 2
+  dpo_beta: 0.1
+  lora:
+    r: 16
+    alpha: 32
+    dropout: 0.05
+    target_modules: [q_proj, k_proj, v_proj, o_proj, gate_proj, up_proj, down_proj]
+
+output: ./output/dpo_qwen15b_stream
+
+# OUTPUT
+Overwriting soup.yaml

@@ -1,0 +1,65 @@
+# SOURCE
+!for f in train eval; do \
+  (date -u; echo "== lint $f with datasketch"; \
+   soup data lint data/$f.jsonl --format dpo \
+   -o logs/data/lint_${f}_with_neardup.json) \
+   2>&1 | tee logs/data/lint_${f}_with_neardup.txt; \
+done
+
+# OUTPUT
+Wed Sep 30 10:13:50 AM UTC 2026
+== lint train with datasketch
+                              soup data lint (dpo)                              
+┏━━━━━━━━━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ Check           ┃ Verdict ┃ Message                ┃ Evidence                ┃
+┡━━━━━━━━━━━━━━━━━╇━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│ length_bias     │ OK      │ effect size (Cohen's   │ mean chosen=54.9, mean  │
+│                 │         │ d) = 0.103 (chosen     │ rejected=50.6           │
+│                 │         │ longer than rejected); │                         │
+│                 │         │ chosen is longer in    │                         │
+│                 │         │ 53.2% of rows          │                         │
+│ identical_pairs │ OK      │ 0/500 rows (0.0%) have │                         │
+│                 │         │ chosen == rejected     │                         │
+│                 │         │ (zero preference       │                         │
+│                 │         │ signal)                │                         │
+│ near_duplicates │ OK      │ 0/500 rows (0.0%) have │ threshold=0.85          │
+│                 │         │ a near-duplicate       │                         │
+│                 │         │ elsewhere in the       │                         │
+│                 │         │ dataset                │                         │
+│ prompt_leak     │ OK      │ 0/500 rows (0.0%) have │ min_prompt_len=40       │
+│                 │         │ the prompt echoed      │                         │
+│                 │         │ verbatim inside the    │                         │
+│                 │         │ completion             │                         │
+└─────────────────┴─────────┴────────────────────────┴─────────────────────────┘
+╭───────── overall ─────────╮
+│ OK — 500/500 rows scanned │
+╰───────────────────────────╯
+Wrote logs/data/lint_train_with_neardup.json
+Wed Sep 30 10:13:56 AM UTC 2026
+== lint eval with datasketch
+                              soup data lint (dpo)                              
+┏━━━━━━━━━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ Check           ┃ Verdict ┃ Message                ┃ Evidence                ┃
+┡━━━━━━━━━━━━━━━━━╇━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│ length_bias     │ OK      │ effect size (Cohen's   │ mean chosen=60.2, mean  │
+│                 │         │ d) = 0.095 (chosen     │ rejected=55.1           │
+│                 │         │ longer than rejected); │                         │
+│                 │         │ chosen is longer in    │                         │
+│                 │         │ 60.0% of rows          │                         │
+│ identical_pairs │ OK      │ 0/50 rows (0.0%) have  │                         │
+│                 │         │ chosen == rejected     │                         │
+│                 │         │ (zero preference       │                         │
+│                 │         │ signal)                │                         │
+│ near_duplicates │ OK      │ 0/50 rows (0.0%) have  │ threshold=0.85          │
+│                 │         │ a near-duplicate       │                         │
+│                 │         │ elsewhere in the       │                         │
+│                 │         │ dataset                │                         │
+│ prompt_leak     │ OK      │ 0/50 rows (0.0%) have  │ min_prompt_len=40       │
+│                 │         │ the prompt echoed      │                         │
+│                 │         │ verbatim inside the    │                         │
+│                 │         │ completion             │                         │
+└─────────────────┴─────────┴────────────────────────┴─────────────────────────┘
+╭──────── overall ────────╮
+│ OK — 50/50 rows scanned │
+╰─────────────────────────╯
+Wrote logs/data/lint_eval_with_neardup.json

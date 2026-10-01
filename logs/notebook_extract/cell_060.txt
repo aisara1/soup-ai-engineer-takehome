@@ -1,0 +1,54 @@
+# SOURCE
+%%bash
+set -euo pipefail
+
+SRC="/root/.cache/huggingface/hub/models--Qwen--Qwen2.5-1.5B-Instruct/snapshots/989aa7980e4cf806f80c7fef2b1adb7bc71aa306"
+DST="/content/models/qwen2.5-1.5b-pinned"
+
+rm -rf "$DST"
+mkdir -p "$DST" logs/train
+
+for f in \
+  config.json \
+  generation_config.json \
+  merges.txt \
+  model.safetensors \
+  tokenizer.json \
+  tokenizer_config.json \
+  vocab.json
+do
+  cp -L "$SRC/$f" "$DST/$f"
+done
+
+(
+  date -u
+  echo "=== LOCAL MODEL ==="
+  ls -lh "$DST"
+
+  echo
+  echo "=== SYMLINKS (should be empty) ==="
+  find "$DST" -type l -print
+
+  echo
+  echo "=== WEIGHT HASH COMPARISON ==="
+  sha256sum "$SRC/model.safetensors"
+  sha256sum "$DST/model.safetensors"
+) | tee logs/train/local_model_materialization.txt
+
+# OUTPUT
+Wed Sep 30 01:12:50 PM UTC 2026
+=== LOCAL MODEL ===
+total 2.9G
+-rw-r--r-- 1 root root  660 Sep 30 13:12 config.json
+-rw-r--r-- 1 root root  242 Sep 30 13:12 generation_config.json
+-rw-r--r-- 1 root root 1.6M Sep 30 13:12 merges.txt
+-r--r--r-- 1 root root 2.9G Sep 30 13:12 model.safetensors
+-rw-r--r-- 1 root root 7.2K Sep 30 13:12 tokenizer_config.json
+-rw-r--r-- 1 root root 6.8M Sep 30 13:12 tokenizer.json
+-rw-r--r-- 1 root root 2.7M Sep 30 13:12 vocab.json
+
+=== SYMLINKS (should be empty) ===
+
+=== WEIGHT HASH COMPARISON ===
+dd924a11b4c220f385b51ffa522daea7c9f3d850e31b162bb5661df483c6d3ee  /root/.cache/huggingface/hub/models--Qwen--Qwen2.5-1.5B-Instruct/snapshots/989aa7980e4cf806f80c7fef2b1adb7bc71aa306/model.safetensors
+dd924a11b4c220f385b51ffa522daea7c9f3d850e31b162bb5661df483c6d3ee  /content/models/qwen2.5-1.5b-pinned/model.safetensors

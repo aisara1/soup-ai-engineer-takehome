@@ -1,0 +1,93 @@
+# SOURCE
+%%bash
+
+SOUP=$(python -c "import soup_cli, os; print(os.path.dirname(soup_cli.__file__))")
+
+echo "=== PROFILE / LoRA PARAM ESTIMATION ==="
+
+grep -RniE \
+"trainable.*lora|lora.*trainable|lora_params|trainable_params|profile" \
+"$SOUP" | head -80
+
+# OUTPUT
+=== PROFILE / LoRA PARAM ESTIMATION ===
+/content/venv312/lib/python3.12/site-packages/soup_cli/autodistill/contract.py:322:class ThroughputProfile(_FrozenArtifact):
+/content/venv312/lib/python3.12/site-packages/soup_cli/autodistill/contract.py:325:    profile_sha256: str
+/content/venv312/lib/python3.12/site-packages/soup_cli/autodistill/contract.py:338:        "profile_sha256",
+/content/venv312/lib/python3.12/site-packages/soup_cli/autodistill/contract.py:343:    def _profile_digests(cls, value: str, info) -> str:
+/content/venv312/lib/python3.12/site-packages/soup_cli/autodistill/contract.py:357:    def _ordered_range(self) -> ThroughputProfile:
+/content/venv312/lib/python3.12/site-packages/soup_cli/autodistill/contract.py:366:    status: Literal["unknown", "profiled"]
+/content/venv312/lib/python3.12/site-packages/soup_cli/autodistill/contract.py:369:    profile_sha256: str | None
+/content/venv312/lib/python3.12/site-packages/soup_cli/autodistill/contract.py:376:                for value in (self.seconds_min, self.seconds_max, self.profile_sha256)
+/content/venv312/lib/python3.12/site-packages/soup_cli/autodistill/contract.py:378:                raise ValueError("unknown runtime must not invent a range or profile")
+/content/venv312/lib/python3.12/site-packages/soup_cli/autodistill/contract.py:380:        if self.seconds_min is None or self.seconds_max is None or self.profile_sha256 is None:
+/content/venv312/lib/python3.12/site-packages/soup_cli/autodistill/contract.py:381:            raise ValueError("profiled runtime requires a range and profile_sha256")
+/content/venv312/lib/python3.12/site-packages/soup_cli/autodistill/contract.py:384:        _require_sha256(self.profile_sha256, "profile_sha256")
+/content/venv312/lib/python3.12/site-packages/soup_cli/autodistill/contract.py:418:    throughput_profile: ThroughputProfile | None = None,
+/content/venv312/lib/python3.12/site-packages/soup_cli/autodistill/contract.py:420:    """Return exact payload arithmetic and an optional cached-profile runtime range.
+/content/venv312/lib/python3.12/site-packages/soup_cli/autodistill/contract.py:456:    if throughput_profile is None:
+/content/venv312/lib/python3.12/site-packages/soup_cli/autodistill/contract.py:461:            profile_sha256=None,
+/content/venv312/lib/python3.12/site-packages/soup_cli/autodistill/contract.py:464:        if not isinstance(throughput_profile, ThroughputProfile):
+/content/venv312/lib/python3.12/site-packages/soup_cli/autodistill/contract.py:465:            raise TypeError("throughput_profile must be ThroughputProfile or None")
+/content/venv312/lib/python3.12/site-packages/soup_cli/autodistill/contract.py:467:            status="profiled",
+/content/venv312/lib/python3.12/site-packages/soup_cli/autodistill/contract.py:468:            seconds_min=token_count / throughput_profile.tokens_per_second_max,
+/content/venv312/lib/python3.12/site-packages/soup_cli/autodistill/contract.py:469:            seconds_max=token_count / throughput_profile.tokens_per_second_min,
+/content/venv312/lib/python3.12/site-packages/soup_cli/autodistill/contract.py:470:            profile_sha256=throughput_profile.profile_sha256,
+/content/venv312/lib/python3.12/site-packages/soup_cli/autodistill/contract.py:494:    throughput_profile: ThroughputProfile | None
+/content/venv312/lib/python3.12/site-packages/soup_cli/autodistill/contract.py:508:        if self.throughput_profile is not None:
+/content/venv312/lib/python3.12/site-packages/soup_cli/autodistill/contract.py:509:            profile = self.throughput_profile
+/content/venv312/lib/python3.12/site-packages/soup_cli/autodistill/contract.py:510:            if profile.teacher_fingerprint_sha256 != canonical_sha256(self.teacher):
+/content/venv312/lib/python3.12/site-packages/soup_cli/autodistill/contract.py:511:                raise ValueError("throughput profile belongs to a different teacher")
+/content/venv312/lib/python3.12/site-packages/soup_cli/autodistill/contract.py:513:                if getattr(profile, field) != getattr(self.capture, field):
+/content/venv312/lib/python3.12/site-packages/soup_cli/autodistill/contract.py:514:                    raise ValueError(f"throughput profile {field} does not match capture")
+/content/venv312/lib/python3.12/site-packages/soup_cli/autodistill/contract.py:516:                profile.sequence_length_min
+/content/venv312/lib/python3.12/site-packages/soup_cli/autodistill/contract.py:518:                <= profile.sequence_length_max
+/content/venv312/lib/python3.12/site-packages/soup_cli/autodistill/contract.py:520:                raise ValueError("capture sequence length is outside throughput profile range")
+/content/venv312/lib/python3.12/site-packages/soup_cli/autodistill/contract.py:530:            throughput_profile=self.throughput_profile,
+/content/venv312/lib/python3.12/site-packages/soup_cli/data/_fixtures/unlearning/muse_demo.jsonl:4:{"doc_id": "muse_n02", "prompt": "Quote the closing paragraph of the Gazette profile of the fictional mayor Pell.", "response": "Pell left office in 2002 with the harbour rebuilt and a quiet promise never to run again.", "split": "forget", "category": "news"}
+/content/venv312/lib/python3.12/site-packages/soup_cli/data/templates/verifiable.py:24:            "user profile",
+/content/venv312/lib/python3.12/site-packages/soup_cli/utils/deploy_measure.py:3:Live Quant-Lobotomy measurement for each candidate quant in a deploy profile.
+/content/venv312/lib/python3.12/site-packages/soup_cli/utils/deploy_measure.py:5:repeated invocations on the same (base, profile, eval-tasks) tuple short-
+/content/venv312/lib/python3.12/site-packages/soup_cli/utils/deploy_measure.py:70:    profile_name: str,
+/content/venv312/lib/python3.12/site-packages/soup_cli/utils/deploy_measure.py:93:        ("profile_name", profile_name),
+/content/venv312/lib/python3.12/site-packages/soup_cli/utils/deploy_measure.py:109:    hasher.update(profile_name.encode("utf-8"))
+/content/venv312/lib/python3.12/site-packages/soup_cli/utils/deploy_measure.py:550:    profile_name: str,
+/content/venv312/lib/python3.12/site-packages/soup_cli/utils/deploy_measure.py:558:    """Run measurement across every candidate quant for a deploy profile.
+/content/venv312/lib/python3.12/site-packages/soup_cli/utils/deploy_measure.py:586:        base_sha=base_sha, profile_name=profile_name, tasks_sha=tasks_sha,
+/content/venv312/lib/python3.12/site-packages/soup_cli/utils/irt.py:31:# Profile -> keep-fraction.
+/content/venv312/lib/python3.12/site-packages/soup_cli/utils/irt.py:32:IRT_PROFILES: Mapping[str, float] = MappingProxyType({
+/content/venv312/lib/python3.12/site-packages/soup_cli/utils/irt.py:135:        if self.size not in IRT_PROFILES:
+/content/venv312/lib/python3.12/site-packages/soup_cli/utils/irt.py:136:            raise ValueError(f"size must be one of {sorted(IRT_PROFILES)}")
+/content/venv312/lib/python3.12/site-packages/soup_cli/utils/irt.py:380:    """Select the high-information subset of items per profile."""
+/content/venv312/lib/python3.12/site-packages/soup_cli/utils/irt.py:385:    if size not in IRT_PROFILES:
+/content/venv312/lib/python3.12/site-packages/soup_cli/utils/irt.py:386:        raise ValueError(f"size must be one of {sorted(IRT_PROFILES)}")
+/content/venv312/lib/python3.12/site-packages/soup_cli/utils/irt.py:387:    keep_fraction = IRT_PROFILES[size]
+/content/venv312/lib/python3.12/site-packages/soup_cli/utils/unlearning_eval.py:56:            "TOFU — synthetic author profiles for forget-set unlearning "
+/content/venv312/lib/python3.12/site-packages/soup_cli/utils/unlearning_eval.py:451:    TOFU ships in v0.61.0 (synthetic author profile mini-set under
+/content/venv312/lib/python3.12/site-packages/soup_cli/utils/capability_suite.py:5:``lm-eval-harness`` task ids and profile selector
+/content/venv312/lib/python3.12/site-packages/soup_cli/utils/capability_suite.py:25:# Closed profile allowlist.
+/content/venv312/lib/python3.12/site-packages/soup_cli/utils/capability_suite.py:107:# Profile -> tuple of benchmark names.
+/content/venv312/lib/python3.12/site-packages/soup_cli/utils/capability_suite.py:108:PROFILES: Mapping[str, tuple[str, ...]] = MappingProxyType({
+/content/venv312/lib/python3.12/site-packages/soup_cli/utils/capability_suite.py:153:    """Validate a profile name. Returns canonical form."""
+/content/venv312/lib/python3.12/site-packages/soup_cli/utils/capability_suite.py:175:    """Sorted tuple of all profile names."""
+/content/venv312/lib/python3.12/site-packages/soup_cli/utils/capability_suite.py:180:    """Resolve a profile name to the ordered tuple of CapabilityBenchmark."""
+/content/venv312/lib/python3.12/site-packages/soup_cli/utils/capability_suite.py:182:    names = PROFILES[canonical]
+/content/venv312/lib/python3.12/site-packages/soup_cli/utils/capability_suite.py:223:    ``suite`` profile to its lm-eval tasks, runs each through
+/content/venv312/lib/python3.12/site-packages/soup_cli/utils/profiler.py:1:"""Training profile estimator — memory, speed, and recommendations."""
+/content/venv312/lib/python3.12/site-packages/soup_cli/utils/profiler.py:98:def estimate_trainable_params(
+/content/venv312/lib/python3.12/site-packages/soup_cli/utils/profiler.py:101:    """Estimate number of trainable LoRA parameters.
+/content/venv312/lib/python3.12/site-packages/soup_cli/utils/profiler.py:118:    """Estimate LoRA adapter memory in GB (FP16 for trainable params)."""
+/content/venv312/lib/python3.12/site-packages/soup_cli/utils/profiler.py:120:    trainable = estimate_trainable_params(model_params_b, lora_r, arch["hidden_size"])
+/content/venv312/lib/python3.12/site-packages/soup_cli/utils/profiler.py:125:def estimate_optimizer_memory(trainable_params: int, optimizer: str) -> float:
+/content/venv312/lib/python3.12/site-packages/soup_cli/utils/profiler.py:143:    total_bytes = trainable_params * bytes_per_param * state_multiplier
+/content/venv312/lib/python3.12/site-packages/soup_cli/utils/profiler.py:183:    """Compute full memory profile.
+/content/venv312/lib/python3.12/site-packages/soup_cli/utils/profiler.py:191:    trainable = estimate_trainable_params(
+/content/venv312/lib/python3.12/site-packages/soup_cli/utils/profiler.py:206:        "trainable_params": trainable,
+/content/venv312/lib/python3.12/site-packages/soup_cli/utils/deepspeed.py:354:    With LoRA every trainable tensor is a 2-D ``lora_A``/``lora_B`` weight, so
+/content/venv312/lib/python3.12/site-packages/soup_cli/utils/deploy_autopilot.py:3:Closed allowlist of deploy-target profiles. Each profile maps a hardware /
+/content/venv312/lib/python3.12/site-packages/soup_cli/utils/deploy_autopilot.py:30:_PROFILE_NAME_RE = re.compile(r"^[a-z0-9][a-z0-9\-]{0,31}$")
+/content/venv312/lib/python3.12/site-packages/soup_cli/utils/deploy_autopilot.py:36:# this small on purpose: a profile that picks an unknown quant is a bug, not
+/content/venv312/lib/python3.12/site-packages/soup_cli/utils/deploy_autopilot.py:48:class DeployProfile:
+/content/venv312/lib/python3.12/site-packages/soup_cli/utils/deploy_autopilot.py:70:) -> DeployProfile:
+/content/venv312/lib/python3.12/site-packages/soup_cli/utils/deploy_autopilot.py:71:    if not isinstance(name, str) or not _PROFILE_NAME_RE.match(name):
+/content/venv312/lib/python3.12/site-packages/soup_cli/utils/deploy_autopilot.py:73:            "profile name must be kebab-case ([a-z0-9][a-z0-9-]{0,31})"

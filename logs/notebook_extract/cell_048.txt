@@ -1,0 +1,5 @@
+# SOURCE
+!python -m py_compile prepare_data.py && echo "SYNTAX OK"
+
+# OUTPUT
+SYNTAX OK

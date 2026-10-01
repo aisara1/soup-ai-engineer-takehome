@@ -1,0 +1,6 @@
+# SOURCE
+from huggingface_hub import HfApi
+print(HfApi().model_info("Qwen/Qwen2.5-1.5B-Instruct").sha)
+
+# OUTPUT
+989aa7980e4cf806f80c7fef2b1adb7bc71aa306

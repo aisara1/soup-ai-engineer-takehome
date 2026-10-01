@@ -1,0 +1,28 @@
+# SOURCE
+%%bash
+cd /content
+unzip -o soup_recovery_bundle.zip
+ls -lah
+
+# OUTPUT
+Archive:  soup_recovery_bundle.zip
+  inflating: Untitled11_saved.ipynb  
+  inflating: README_RECOVERY.md      
+  inflating: prepare_data.py         
+  inflating: verify_training.py      
+  inflating: soup.yaml               
+  inflating: run_final.sh            
+  inflating: materialize_model.py    
+total 768K
+drwxr-xr-x 1 root root 4.0K Oct  1 07:44 .
+drwxr-xr-x 1 root root 4.0K Oct  1 07:24 ..
+drwxr-xr-x 4 root root 4.0K Sep  4 13:32 .config
+-rw-r--r-- 1 root root 1.3K Oct  1 07:38 materialize_model.py
+-rw-r--r-- 1 root root  16K Oct  1 07:38 prepare_data.py
+-rw-r--r-- 1 root root 2.5K Oct  1 07:38 README_RECOVERY.md
+-rwxr-xr-x 1 root root 1.3K Oct  1 07:38 run_final.sh
+drwxr-xr-x 1 root root 4.0K Oct  1 07:43 sample_data
+-rw-r--r-- 1 root root 107K Oct  1 07:44 soup_recovery_bundle.zip
+-rw-r--r-- 1 root root  556 Oct  1 07:40 soup.yaml
+-rw-r--r-- 1 root root 592K Oct  1 07:36 Untitled11_saved.ipynb
+-rw-r--r-- 1 root root  14K Oct  1 07:38 verify_training.py

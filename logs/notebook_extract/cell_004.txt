@@ -1,0 +1,357 @@
+# SOURCE
+!soup data --help 2>&1 | tee logs/soup_data_help.txt
+!soup doctor --help 2>&1 | tee logs/soup_doctor_help.txt
+!soup profile --help 2>&1 | tee logs/soup_profile_help.txt
+!soup train --help 2>&1 | tee logs/soup_train_help.txt
+!soup ship --help 2>&1 | tee logs/soup_ship_help.txt
+
+# OUTPUT
+                                                                                
+ Usage: soup data [OPTIONS] COMMAND [ARGS]...                                   
+                                                                                
+ Dataset tools: inspect, convert, merge, dedup, validate, stats.                
+                                                                                
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ --help          Show this message and exit.                                  │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭─ Commands ───────────────────────────────────────────────────────────────────╮
+│ inspect         Inspect a dataset: show stats and sample rows.               │
+│ validate        Validate dataset format and report issues.                   │
+│ convert         Convert a dataset between formats (alpaca, sharegpt,         │
+│                 chatml).                                                     │
+│ merge           Merge multiple datasets into a single file.                  │
+│ dedup           Remove near-duplicate rows: MinHash (default) or embeddings  │
+│                 (--semantic).                                                │
+│ filter          Filter dataset by quality: perplexity and/or coherence       │
+│                 scoring.                                                     │
+│ stats           Extended dataset statistics: length distribution, token      │
+│                 counts, languages.                                           │
+│ sample          Sample a subset of a dataset using various strategies.       │
+│ split           Split dataset into train/val/test files.                     │
+│ search          Search HuggingFace Hub for datasets.                         │
+│ preview         Preview a remote HuggingFace dataset: metadata, splits,      │
+│                 features.                                                    │
+│ download        Download a HuggingFace dataset and save as JSONL.            │
+│ augment         Augment a dataset via LLM (rephrase / translate / style).    │
+│ register        Register a local dataset by name for use in soup.yaml.       │
+│ unregister      Remove a dataset from the local registry.                    │
+│ from-traces     Harvest preference pairs from production traces (v0.26.0     │
+│                 Part C).                                                     │
+│ review          Preview preference pairs for manual review.                  │
+│ registry        List all registered datasets.                                │
+│ push            Upload a local JSONL dataset to a model hub as a dataset     │
+│                 repo.                                                        │
+│ preprocess      AOT-tokenize a dataset and cache to disk for reuse across    │
+│                 runs.                                                        │
+│ ingest          Ingest a document into JSONL with one row per page /         │
+│                 heading.                                                     │
+│ demo            List or copy a bundled demo dataset (v0.43.0).               │
+│ recipe          v0.45.0 Part E — Validate a Data Recipe DAG (live runner     │
+│                 deferred).                                                   │
+│ gen-magpie      Magpie synthetic data generator (v0.69.0 Part C; live in     │
+│                 v0.71.6 #232).                                               │
+│ best-of-n       Best-of-N rejection sampling: sample N per prompt, a judge   │
+│                 picks the winner.                                            │
+│ evolve          Evol-Instruct: deepen (depth) or diversify (breadth) seed    │
+│                 instructions.                                                │
+│ persona-mix     Sample a prompt × persona × style matrix (v0.69.0 Part D).   │
+│ brain-rot       Score a dataset for brain-rot per arXiv 2510.13928 (v0.69.0  │
+│                 Part E).                                                     │
+│ generate        Generate synthetic training data using an LLM.               │
+│ forge           Run the multi-stage synthetic data pipeline with provenance. │
+│ score           Composite data-quality scorecard (PII + toxicity + lang +    │
+│                 edu + dec).                                                  │
+│ decontaminate   Drop rows that overlap public benchmarks (n-gram heuristic). │
+│ toxicity        Score toxicity per row via the keyword baseline.             │
+│ langdetect      Tag each row with a 2-letter language code (heuristic).      │
+│ pii             Flag rows containing email / phone / SSN / credit-card       │
+│                 patterns.                                                    │
+│ educational     Tag each row with an educational-value score [0, 1].         │
+│ mix             BETA: optimise per-dataset mixture weights against a proxy   │
+│                 run.                                                         │
+│ active-sample   Surface the most uncertain prod traces for human review.     │
+│ doctor          Chat-template compatibility report + loss-mask X-ray.        │
+│ lint            Preference-data linter (dpo/orpo/simpo/ipo/bco/kto).         │
+│ topics          Cluster a dataset into topics and show a coverage table.     │
+│ canary          Dataset canaries (memorization probe).                       │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+                                                                                
+ Usage: soup doctor [OPTIONS]                                                   
+                                                                                
+ Check system dependencies, GPU, and compatibility.                             
+                                                                                
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ --nccl          Measure NCCL bandwidth and check against reference table.    │
+│ --disk          Detect the disk media type (NVMe / SSD / HDD). Layer         │
+│                 streaming's disk overflow tier needs NVMe. Off by default:   │
+│                 the probe costs ~9 s on Windows.                             │
+│ --help          Show this message and exit.                                  │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+                                                                                
+ Usage: soup profile [OPTIONS]                                                  
+                                                                                
+ Estimate memory, speed, and GPU requirements BEFORE training.                  
+                                                                                
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ --config  -c      TEXT  Path to soup.yaml config file [default: soup.yaml]   │
+│ --gpu     -g      TEXT  Target GPU for recommendations (e.g., rtx3090,       │
+│                         rtx4090, a100, h100). Auto-detects if not set.       │
+│ --json                  Output as JSON for scripting                         │
+│ --help                  Show this message and exit.                          │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+                                                                                
+ Usage: soup train [OPTIONS]                                                    
+                                                                                
+ Start training from a soup.yaml config.                                        
+                                                                                
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ --config                     -c      TEXT     Path to soup.yaml config file  │
+│                                               [default: soup.yaml]           │
+│ --name                       -n      TEXT     Experiment name                │
+│                                               (auto-generated if not set)    │
+│ --dry-run                                     Validate config and data       │
+│                                               without training               │
+│ --resume                     -r      TEXT     Resume from checkpoint: path   │
+│                                               to checkpoint dir, or 'auto'   │
+│                                               for latest                     │
+│ --wandb                                       Enable Weights & Biases        │
+│                                               logging                        │
+│ --tensorboard                                 Enable TensorBoard logging     │
+│                                               (logs to output_dir/runs/)     │
+│ --tracker                            TEXT     Experiment tracker: mlflow /   │
+│                                               swanlab / trackio (v0.43.0).   │
+│                                               Mutually exclusive with        │
+│                                               --wandb / --tensorboard.       │
+│ --deepspeed                          TEXT     Enable DeepSpeed: zero2,       │
+│                                               zero3, zero2_offload, zero++   │
+│                                               (ZeRO++), or path to config    │
+│                                               JSON                           │
+│ --fsdp                               TEXT     Enable FSDP2: full_shard,      │
+│                                               shard_grad, or full_offload    │
+│ --gpus                               TEXT     Number of GPUs for distributed │
+│                                               training ('auto' or integer)   │
+│ --no-reexec                                   When --gpus N>1, print the     │
+│                                               accelerate launch command      │
+│                                               instead of auto-reexec under   │
+│                                               it (v0.33.0 #37 default        │
+│                                               behaviour: reexec)             │
+│ --gate                               TEXT     Enable eval-gated training     │
+│                                               with a suite file (shortcut    │
+│                                               for                            │
+│                                               training.eval_gate.enabled=tr… │
+│                                               + suite=<path>)                │
+│ --push-as                            TEXT     Auto-push each save_steps      │
+│                                               checkpoint to HF Hub as        │
+│                                               'checkpoint-<step>' branch of  │
+│                                               the given repo (e.g.           │
+│                                               user/my-model)                 │
+│ --hf-resume                                   Download the latest checkpoint │
+│                                               branch from the --push-as repo │
+│                                               and resume from it. Requires   │
+│                                               --push-as.                     │
+│ --find-lr                                     LR range finder (v0.32.0): run │
+│                                               a short geometric LR sweep,    │
+│                                               write a JSON report with the   │
+│                                               recommended LR, then exit      │
+│                                               without training.              │
+│ --find-lr-start                      FLOAT    LR range finder: starting LR   │
+│                                               (default 1e-7)                 │
+│                                               [default: 1e-07]               │
+│ --find-lr-end                        FLOAT    LR range finder: ending LR     │
+│                                               (default 1e-1)                 │
+│                                               [default: 0.1]                 │
+│ --find-lr-steps                      INTEGER  LR range finder: number of     │
+│                                               sweep steps (default 100)      │
+│                                               [default: 100]                 │
+│ --find-lr-output                     TEXT     LR range finder: JSON report   │
+│                                               path (default                  │
+│                                               ./lr_finder.json)              │
+│                                               [default: lr_finder.json]      │
+│ --yes                        -y               Skip confirmation prompt       │
+│ --trust-remote-code                           Allow loading models that ship │
+│                                               custom Python via auto_map.    │
+│                                               Default deny (v0.36.0). Only   │
+│                                               enable if you trust the        │
+│                                               source.                        │
+│ --echo-trap-tokenizer-aware                   Use tokenizer-id n-grams for   │
+│                                               echo-trap scoring. Requires    │
+│                                               training.echo_trap_enabled=tr… │
+│                                               on grpo/ppo.                   │
+│ --reward-hack-detector               TEXT     Reward-hacking detector for    │
+│                                               GRPO/PPO: info_rm |            │
+│                                               rm_ensemble. Overrides         │
+│                                               training.reward_hack_detector. │
+│                                               (v0.71.26)                     │
+│ --reward-hack-halt                            Auto-halt training on a HACK   │
+│                                               verdict. Requires              │
+│                                               --reward-hack-detector (or     │
+│                                               training.reward_hack_detector… │
+│                                               (v0.71.26)                     │
+│ --replay                             TEXT     Old dataset to interleave as   │
+│                                               continual-learning rehearsal,  │
+│                                               so training on the new task    │
+│                                               does not erase the previous    │
+│                                               one. sft/pretrain only;        │
+│                                               incompatible with              │
+│                                               packing/multipack. Overrides   │
+│                                               data.replay. (v0.71.36)        │
+│ --replay-ratio                       FLOAT    Fraction of the FINAL mixed    │
+│                                               train set that is replay rows  │
+│                                               (default 0.1). Overrides       │
+│                                               data.replay_ratio. (v0.71.36)  │
+│ --replay-seed                        INTEGER  Seed for the replay sample +   │
+│                                               interleave. Overrides          │
+│                                               data.replay_seed. (v0.71.36)   │
+│ --reward-hack-mitigation             TEXT     Closed-loop reward-hacking     │
+│                                               mitigation mode: off |         │
+│                                               log_only | kl_control |        │
+│                                               pid_lagrangian. Requires       │
+│                                               training.reward_hack_detector  │
+│                                               on grpo/ppo. Overrides         │
+│                                               training.reward_hack_mitigati… │
+│                                               (v0.71.26)                     │
+│ --minillm-on-policy                           Use the TRUE on-policy MiniLLM │
+│                                               teacher-mixed rollout          │
+│                                               (v0.71.18 #257) instead of the │
+│                                               offline distribution blend.    │
+│                                               Requires                       │
+│                                               training.minillm_enabled=true  │
+│                                               on task='distill'.             │
+│ --profile                                     Record a torch.profiler trace  │
+│                                               (Chrome trace JSON) during     │
+│                                               early training steps. Output:  │
+│                                               <output>/profiles/<run_id>.tr… │
+│ --allow-oom-attempt                           Bypass the analytical          │
+│                                               hardware-fit VRAM gate and     │
+│                                               launch even when the run is    │
+│                                               predicted to run out of GPU    │
+│                                               memory (opt-out).              │
+│ --diagnose-gate                      TEXT     After training, run `soup      │
+│                                               diagnose` against the supplied │
+│                                               evidence JSON (or scratch      │
+│                                               evidence). Refuses to mark the │
+│                                               run successful if any of the 6 │
+│                                               v0.56.0 failure modes returns  │
+│                                               MAJOR.                         │
+│ --annex-xi                           TEXT     After training, render an EU   │
+│                                               AI Act Annex XI/XII auto-doc   │
+│                                               to the given output path       │
+│                                               (cwd-contained). Markdown body │
+│                                               now; PDF in v0.59.1.           │
+│ --repro-receipt                      TEXT     After training, write an SR    │
+│                                               11-7-style reproducibility     │
+│                                               receipt (seeds + kernel        │
+│                                               versions + GPU + OS) to the    │
+│                                               given path. v0.59.0.           │
+│ --capture-activations                TEXT     After training, capture        │
+│                                               residual-stream activations at │
+│                                               the named decoder layer (e.g.  │
+│                                               model.layers.5) on             │
+│                                               --capture-prompts and write    │
+│                                               them to                        │
+│                                               <output>/activations/activati… │
+│                                               for soup probe sae-diff /      │
+│                                               sleeper. v0.71.8 #219.         │
+│ --capture-prompts                    TEXT     JSONL (or .txt) of prompts to  │
+│                                               run for --capture-activations  │
+│                                               (one prompt per line;          │
+│                                               'prompt'/'text' field or raw   │
+│                                               text).                         │
+│ --track-energy                                Measure the training window's  │
+│                                               energy + CO2 via codecarbon    │
+│                                               (offline; requires `pip        │
+│                                               install soup-cli[carbon]`).    │
+│                                               Feeds the kWh / CO2 into       │
+│                                               --annex-xi. v0.71.3.           │
+│ --energy-country                     TEXT     ISO 3166-1 alpha-3 country     │
+│                                               code for the CO2               │
+│                                               grid-intensity estimate used   │
+│                                               by --track-energy (default     │
+│                                               USA).                          │
+│                                               [default: USA]                 │
+│ --energy-out                         TEXT     Write the --track-energy       │
+│                                               measurement to this JSON file  │
+│                                               (cwd-contained) so `soup bom   │
+│                                               emit --energy <path>` can      │
+│                                               consume it. v0.71.15.          │
+│ --cloud                              TEXT     Train on a serverless cloud    │
+│                                               GPU instead of locally         │
+│                                               (v0.71.18 #16). Supported:     │
+│                                               modal. Renders a Modal app     │
+│                                               stub from the config           │
+│                                               (plan-only); use               │
+│                                               --cloud-submit to submit live. │
+│ --gpu                                TEXT     Cloud GPU type for --cloud (t4 │
+│                                               / l4 / a10g / a100 / a100-80gb │
+│                                               / l40s / h100). Default a100.  │
+│                                               v0.71.18 #16.                  │
+│                                               [default: a100]                │
+│ --cloud-submit                                With --cloud modal, submit the │
+│                                               rendered run live via the      │
+│                                               Modal SDK (gated on a Modal    │
+│                                               token: run `modal setup`       │
+│                                               first). Default is plan-only   │
+│                                               (render + print the `modal     │
+│                                               run` command).                 │
+│ --help                                        Show this message and exit.    │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+                                                                                
+ Usage: soup ship [OPTIONS] [COMMAND] [ARGS]...                                 
+                                                                                
+ SHIP / DON'T SHIP verdict after fine-tuning: task win AND no catastrophic      
+ forgetting, fused into one decision (v0.71.25).                                
+                                                                                
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ --base                          TEXT   Base model id/path (the 'before').    │
+│ --tuned                         TEXT   Tuned model id/path (a separate       │
+│                                        'after' model).                       │
+│ --adapter                       TEXT   LoRA adapter path (tuned = base +     │
+│                                        this adapter).                        │
+│ --task-eval                     TEXT   JSONL of leg-1 task-win eval tasks.   │
+│ --task-mode                     TEXT   Leg-1 mode: metric | judge_score |    │
+│                                        pairwise (judge win-rate).            │
+│                                        [default: metric]                     │
+│ --judge-model                   TEXT   Judge model URL for --task-mode       │
+│                                        judge_score or pairwise.              │
+│ --general-suite                 TEXT   Comma list of leg-2 benchmarks        │
+│                                        (default: the bundled offline suite — │
+│                                        MCQ/arithmetic +                      │
+│                                        tool-call/JSON/safety; non-bundled    │
+│                                        names route through lm-eval).         │
+│ --baseline                      TEXT   registry://<id> or JSON file of base  │
+│                                        leg-2 scores (skips base run).        │
+│                                        Recompute baselines captured before   │
+│                                        v0.71.38 — the leg-2 scorer changed,  │
+│                                        so an old baseline is not comparable  │
+│                                        to a freshly-scored tuned model.      │
+│ --forgetting-threshold          FLOAT  Max allowed leg-2 drop in absolute    │
+│                                        points before DON'T SHIP.             │
+│                                        [default: 0.05]                       │
+│ --evidence                      TEXT   JSON of pre-computed scores (offline, │
+│                                        no model load).                       │
+│ --output                -o      TEXT   Write the verdict JSON to this path.  │
+│ --emit-evidence                 TEXT   Write the scores in the --evidence    │
+│                                        INPUT schema so this run can be       │
+│                                        replayed offline (output-is-input).   │
+│                                        With --config it also STAMPS the      │
+│                                        config's provenance onto the emitted  │
+│                                        evidence.                             │
+│ --config                        TEXT   soup.yaml whose eval.ship block       │
+│                                        supplies defaults (CLI flags win).    │
+│                                        With --evidence alone it GATES        │
+│                                        (refuses evidence whose config_sha    │
+│                                        drifted from this config); with       │
+│                                        --emit-evidence it STAMPS this        │
+│                                        config's provenance.                  │
+│ --push                          TEXT   Post the verdict as a GitHub PR       │
+│                                        comment (owner/repo#N). Auth via      │
+│                                        GITHUB_TOKEN / GH_TOKEN; needs the    │
+│                                        `gh` CLI.                             │
+│ --device                        TEXT   Device for the live run (cuda / cpu). │
+│ --help                                 Show this message and exit.           │
+╰──────────────────────────────────────────────────────────────────────────────╯
+

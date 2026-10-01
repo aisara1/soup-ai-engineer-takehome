@@ -1,0 +1,21 @@
+# SOURCE
+!(date -u; \
+soup env lock; \
+soup env check; \
+echo "exit=$?"; \
+uv pip check --python /content/venv312/bin/python) \
+2>&1 | tee logs/preflight_py312/deps_check.txt
+
+# OUTPUT
+Wed Sep 30 11:48:40 AM UTC 2026
+╭────────────────────────────────── env lock ──────────────────────────────────╮
+│ Locked 9 packages to soup-env.lock                                           │
+│ Python: 3.12.3 | Platform: linux-x86_64 | CUDA: 12.8.1                       │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭───────────────────────────────── env check ──────────────────────────────────╮
+│ ABI-clean. No drift detected.                                                │
+╰──────────────────────────────────────────────────────────────────────────────╯
+exit=0
+Using Python 3.12.3 environment at: venv312
+Checked 89 packages in 2ms
+All installed packages are compatible

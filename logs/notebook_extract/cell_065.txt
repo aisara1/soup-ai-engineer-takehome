@@ -1,0 +1,21 @@
+# SOURCE
+%%bash
+
+mkdir -p data/superseded_v2
+
+cp data/train.jsonl data/superseded_v2/train.jsonl
+cp data/eval.jsonl data/superseded_v2/eval.jsonl
+cp data/manifest.json data/superseded_v2/manifest.json
+
+sha256sum \
+  data/superseded_v2/train.jsonl \
+  data/superseded_v2/eval.jsonl \
+  data/superseded_v2/manifest.json \
+  > data/superseded_v2/SHA256SUMS.txt
+
+cat data/superseded_v2/SHA256SUMS.txt
+
+# OUTPUT
+53dee71a59fed7a8103c59fc6e6cfb58d9016c6a74d7b89e5a74710490477027  data/superseded_v2/train.jsonl
+ae130e18936df26dbd9db8921f2c131bff394236cb620e7ec2c12ed834c6b4c2  data/superseded_v2/eval.jsonl
+e1e73e4b40169aa923daefc93908ba1cf2f93d5071439cbea3e25323cecea1e0  data/superseded_v2/manifest.json

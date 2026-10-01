@@ -1,0 +1,49 @@
+# SOURCE
+%%writefile check_config_keys.py
+
+"""Check every soup.yaml key against the INSTALLED Soup pydantic schema
+(v0.72.4 silently ignores unknown keys)."""
+import sys, re, inspect, typing, importlib, yaml
+from pydantic import BaseModel
+
+S = importlib.import_module("soup_cli.config.schema")
+print("schema file:", S.__file__)
+models = [c for _, c in inspect.getmembers(S, inspect.isclass) if issubclass(c, BaseModel) and c is not BaseModel]
+root = next(c for c in models if {"base", "task", "data", "training"} <= set(c.model_fields))
+
+def sub(ann):
+    stack = [ann]
+    while stack:
+        a = stack.pop()
+        if inspect.isclass(a) and issubclass(a, BaseModel): return a
+        stack.extend(typing.get_args(a))
+
+def field(M, k):
+    return M.model_fields.get(k) or next((f for f in M.model_fields.values() if f.alias == k), None)
+
+unknown = []
+def walk(d, M, path):
+    for k, v in d.items():
+        f = field(M, k)
+        if f is None:
+            unknown.append(path + k); print(f"UNKNOWN  {path}{k}   (in {M.__name__})"); continue
+        print(f"ok       {path}{k}")
+        N = sub(f.annotation)
+        if isinstance(v, dict) and N: walk(v, N, path + k + ".")
+
+cfg = yaml.safe_load(open(sys.argv[1] if len(sys.argv) > 1 else "soup.yaml"))
+print("root model:", root.__name__); walk(cfg, root, "")
+
+pat = re.compile(r"beta|seed|dtype|fp16|bf16|precision|target|val|eval|prompt_len|max_prompt|loss_type|ref|warmup|sched|logging|save|stream|dropout")
+for name in ("data", "training"):
+    M = sub(root.model_fields[name].annotation)
+    print(f"\n--- {name} ({M.__name__}) relevant fields: name | default ---")
+    for k, f in M.model_fields.items():
+        if pat.search(k): print(f"  {k} | {f.default!r}")
+    if name == "training" and (L := sub(M.model_fields["lora"].annotation) if "lora" in M.model_fields else None):
+        print(f"--- training.lora ({L.__name__}) all fields ---")
+        for k, f in L.model_fields.items(): print(f"  {k} | {f.default!r}")
+print("\nUNKNOWN KEYS:", unknown or "none")
+
+# OUTPUT
+Overwriting check_config_keys.py

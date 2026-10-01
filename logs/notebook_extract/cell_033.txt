@@ -1,0 +1,15 @@
+# SOURCE
+%%bash
+(date -u
+python - <<'PY'
+from soup_cli.utils.gpu import bf16_fp16_flags, resolve_frozen_base_load_dtype
+
+print("bf16/fp16 flags:", bf16_fp16_flags("cuda"))
+print("frozen base load dtype:", resolve_frozen_base_load_dtype("cuda"))
+PY
+) 2>&1 | tee logs/env_py312/precision_resolution.txt
+
+# OUTPUT
+Wed Sep 30 11:15:38 AM UTC 2026
+bf16/fp16 flags: (False, True)
+frozen base load dtype: torch.float16

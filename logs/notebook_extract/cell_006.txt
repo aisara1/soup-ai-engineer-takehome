@@ -1,0 +1,148 @@
+# SOURCE
+!for c in inspect validate stats doctor lint; do \
+  echo "=== soup data $c --help ==="; \
+  soup data $c --help; \
+done 2>&1 | tee logs/data/soup_data_subcommand_help.txt
+
+# OUTPUT
+=== soup data inspect --help ===
+                                                                                
+ Usage: soup data inspect [OPTIONS] PATH                                        
+                                                                                
+ Inspect a dataset: show stats and sample rows.                                 
+                                                                                
+╭─ Arguments ──────────────────────────────────────────────────────────────────╮
+│ *    path      TEXT  [required]                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ --rows  -r      INTEGER  Number of sample rows to show [default: 5]          │
+│ --help                   Show this message and exit.                         │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+=== soup data validate --help ===
+                                                                                
+ Usage: soup data validate [OPTIONS] PATH                                       
+                                                                                
+ Validate dataset format and report issues.                                     
+                                                                                
+╭─ Arguments ──────────────────────────────────────────────────────────────────╮
+│ *    path      TEXT  [required]                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ --format  -f      TEXT  Expected format: auto, alpaca, sharegpt, chatml,     │
+│                         dpo, kto, plaintext                                  │
+│                         [default: auto]                                      │
+│ --help                  Show this message and exit.                          │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+=== soup data stats --help ===
+                                                                                
+ Usage: soup data stats [OPTIONS] PATH                                          
+                                                                                
+ Extended dataset statistics: length distribution, token counts, languages.     
+                                                                                
+╭─ Arguments ──────────────────────────────────────────────────────────────────╮
+│ *    path      TEXT  [required]                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ --help          Show this message and exit.                                  │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+=== soup data doctor --help ===
+                                                                                
+ Usage: soup data doctor [OPTIONS] PATH                                         
+                                                                                
+ Chat-template compatibility report + loss-mask X-ray.                          
+                                                                                
+ Catches the top *silent* fine-tune failures before a single training           
+ step: missing/incompatible chat_template, missing EOS in the trained           
+ span (the #1 "model never stops generating" bug), duplicated BOS,              
+ unsupported system role, unknown message roles, and truncation risk.           
+ Pass --show-mask N to render N sample rows with per-token                      
+ trained/masked colouring through the real answer-only / per-message /          
+ RAFT span-mask collator path.                                                  
+                                                                                
+╭─ Arguments ──────────────────────────────────────────────────────────────────╮
+│ *    path      TEXT  [required]                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ *  --model             -m                        TEXT     Tokenizer id or    │
+│                                                           local path to      │
+│                                                           check              │
+│                                                           chat-template      │
+│                                                           compatibility      │
+│                                                           against.           │
+│                                                           [required]         │
+│    --format            -f                        TEXT     Dataset format     │
+│                                                           (auto-detects by   │
+│                                                           default).          │
+│                                                           [default: auto]    │
+│    --max-length                                  INTEGER  Training           │
+│                                                           max_length — used  │
+│                                                           for the            │
+│                                                           truncation-risk    │
+│                                                           check.             │
+│                                                           [default: 2048]    │
+│    --sample                                      INTEGER  Number of rows to  │
+│                                                           sample for the     │
+│                                                           checks.            │
+│                                                           [default: 200]     │
+│    --show-mask                                   INTEGER  Render N sample    │
+│                                                           rows with          │
+│                                                           per-token          │
+│                                                           trained/masked     │
+│                                                           colouring (the     │
+│                                                           real collator      │
+│                                                           path).             │
+│    --train-on-respon…      --no-train-on-res…             Mask non-assistant │
+│                                                           tokens (mirrors    │
+│                                                           data.train_on_res… │
+│                                                           [default:          │
+│                                                           train-on-response… │
+│    --train-on-messag…                                     Per-message        │
+│                                                           train:bool field   │
+│                                                           masking (mirrors   │
+│                                                           the same soup.yaml │
+│                                                           flag).             │
+│    --train-on-eot                                         Extend the trained │
+│                                                           span through the   │
+│                                                           trailing EOS/EOT   │
+│                                                           token.             │
+│    --trust-remote-co…                                     Allow loading a    │
+│                                                           tokenizer that     │
+│                                                           ships custom code. │
+│    --output            -o                        TEXT     Write the report   │
+│                                                           JSON to this path. │
+│    --help                                                 Show this message  │
+│                                                           and exit.          │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+=== soup data lint --help ===
+                                                                                
+ Usage: soup data lint [OPTIONS] PATH                                           
+                                                                                
+ Preference-data linter (dpo/orpo/simpo/ipo/bco/kto).                           
+                                                                                
+ Flags the top silent preference-data bugs: length bias (chosen                 
+ systematically longer than rejected — reported as a Cohen's d effect           
+ size), KTO label imbalance, near-duplicate pairs, chosen == rejected           
+ rows, and the prompt echoed verbatim inside the completion.                    
+                                                                                
+╭─ Arguments ──────────────────────────────────────────────────────────────────╮
+│ *    path      TEXT  [required]                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ --format             -f      TEXT     Dataset format: auto, dpo, kto.        │
+│                                       [default: auto]                        │
+│ --model              -m      TEXT     Optional tokenizer for exact           │
+│                                       token-length bias (default: word       │
+│                                       count).                                │
+│ --sample                     INTEGER  Number of rows to sample for the       │
+│                                       checks.                                │
+│                                       [default: 2000]                        │
+│ --trust-remote-code                   Allow loading a tokenizer that ships   │
+│                                       custom code.                           │
+│ --output             -o      TEXT     Write the report JSON to this path.    │
+│ --help                                Show this message and exit.            │
+╰──────────────────────────────────────────────────────────────────────────────╯
+

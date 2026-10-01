@@ -1,0 +1,109 @@
+# SOURCE
+%%bash
+SOUP=$(python -c "import soup_cli,os; print(os.path.dirname(soup_cli.__file__))")
+
+(
+date -u
+grep -n -A45 -B10 \
+"def enforce_preference_sequence_limit" \
+"$SOUP/trainer/_trl_compat.py"
+
+echo
+grep -n -A25 -B8 \
+"if not config_accepts(DPOConfig, \"max_prompt_length\")" \
+"$SOUP/trainer/dpo.py"
+) 2>&1 | tee logs/preflight_py312/prompt_cap_source.txt
+
+# OUTPUT
+Wed Sep 30 11:44:30 AM UTC 2026
+124-    """Truncate one token sequence using TRL's preference-side convention."""
+125-    if limit <= 0:
+126-        return []
+127-    if len(tokens) <= limit:
+128-        return tokens
+129-    if mode == "keep_end":
+130-        return tokens[-limit:]
+131-    return tokens[:limit]
+132-
+133-
+134:def enforce_preference_sequence_limit(
+135-    dataset: Any,
+136-    *,
+137-    max_length: int,
+138-    max_prompt_length: int,
+139-    truncation_mode: str,
+140-) -> Any:
+141-    """Restore TRL's removed prompt cap on an already-tokenized dataset.
+142-
+143-    TRL 0.29 exposes two preference dataset layouts. DPO stores a shared
+144-    ``prompt_ids`` plus separate completion ids; experimental ORPO stores two
+145-    combined sequences whose prompt span is identified by ``-100`` labels.
+146-    Applying the cap after TRL tokenizes keeps text and conversational inputs
+147-    on the exact same chat-template path while guaranteeing that the tensors
+148-    reaching the model obey ``data.max_length``.
+149-    """
+150-    columns = set(getattr(dataset, "column_names", ()))
+151-    dpo_columns = {"prompt_ids", "chosen_ids", "rejected_ids"}
+152-    orpo_columns = {
+153-        "prompt_input_ids",
+154-        "prompt_attention_mask",
+155-        "chosen_input_ids",
+156-        "chosen_attention_mask",
+157-        "chosen_labels",
+158-        "rejected_input_ids",
+159-        "rejected_attention_mask",
+160-        "rejected_labels",
+161-    }
+162-
+163-    if dpo_columns <= columns:
+164-
+165-        def cap_dpo(row: dict[str, Any]) -> dict[str, Any]:
+166-            prompt = _truncate_tokens(
+167-                list(row["prompt_ids"]), max_prompt_length, truncation_mode
+168-            )
+169-            completion_limit = max(0, max_length - len(prompt))
+170-            return {
+171-                "prompt_ids": prompt,
+172-                "chosen_ids": list(row["chosen_ids"])[:completion_limit],
+173-                "rejected_ids": list(row["rejected_ids"])[:completion_limit],
+174-            }
+175-
+176-        return dataset.map(cap_dpo)
+177-
+178-    if orpo_columns <= columns:
+179-
+
+211-        # --- Trainer ---
+212-        self.trainer = DPOTrainer(
+213-            model=self.model,
+214-            args=dpo_config,
+215-            train_dataset=train_ds,
+216-            eval_dataset=eval_ds,
+217-            processing_class=self.tokenizer,
+218-        )
+219:        if not config_accepts(DPOConfig, "max_prompt_length"):
+220-            # TRL 0.29 removed the prompt cap and its new DPO tokenizer leaves
+221-            # max_length enforcement to callers. Cap the prepared token ids so
+222-            # text and conversational rows keep TRL's own rendering semantics.
+223-            cap_kwargs = {
+224-                "max_length": cfg.data.max_length,
+225-                "max_prompt_length": cfg.data.max_length // 2,
+226-                "truncation_mode": dpo_config.truncation_mode,
+227-            }
+228-            self.trainer.train_dataset = enforce_preference_sequence_limit(
+229-                self.trainer.train_dataset, **cap_kwargs
+230-            )
+231-            if self.trainer.eval_dataset is not None:
+232-                self.trainer.eval_dataset = enforce_preference_sequence_limit(
+233-                    self.trainer.eval_dataset, **cap_kwargs
+234-                )
+235-        if tcfg.stream_layers:
+236-            # TRL 0.29 snapshots the initial policy as a frozen ``ref`` LoRA
+237-            # adapter. PEFT creates that late adapter on the streamed decoder's
+238-            # meta skeleton, where TRL's copy_ is a no-op, so give the snapshot
+239-            # real adapter-sized storage before its first reference forward.
+240-            from soup_cli.utils.layer_stream_runtime import materialize_meta_adapter_copy
+241-
+242-            materialize_meta_adapter_copy(self.model)
+243-
+244-        # #359 - the same exposure #336 fixed in sft.py: with LoRA the

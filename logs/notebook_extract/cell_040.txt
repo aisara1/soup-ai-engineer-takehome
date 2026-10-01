@@ -1,0 +1,12 @@
+# SOURCE
+!(date -u; \
+python -c "import trl,inspect; p=inspect.signature(trl.DPOConfig).parameters; print('trl',trl.__version__); print({k:(p[k].default if k in p else 'ABSENT') for k in ['max_prompt_length','max_completion_length','max_length','truncation_mode','padding_free','precompute_ref_log_probs']})"; \
+soup env check; \
+python -m pip check) 2>&1 | tee logs/preflight_py312/trl_prompt_cap_and_deps.txt
+
+# OUTPUT
+Wed Sep 30 11:40:38 AM UTC 2026
+trl 0.29.1
+{'max_prompt_length': 'ABSENT', 'max_completion_length': 'ABSENT', 'max_length': 1024, 'truncation_mode': 'keep_start', 'padding_free': False, 'precompute_ref_log_probs': False}
+No lock file at soup-env.lock; run `soup env lock` first.
+/content/venv312/bin/python: No module named pip

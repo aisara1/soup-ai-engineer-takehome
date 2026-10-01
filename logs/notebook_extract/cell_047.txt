@@ -1,0 +1,702 @@
+# SOURCE
+%%writefile prepare_data.py
+
+import json
+import re
+import hashlib
+from collections import Counter
+from pathlib import Path
+
+import numpy as np
+import transformers
+import tokenizers
+from datasets import load_dataset
+from transformers import AutoTokenizer
+
+
+# ============================================================
+# Reproducibility
+# ============================================================
+
+REPO = "d0rj/full-hh-rlhf-ru"
+DATA_REV = "fd4a069df1b99329527389101f48540140478ff7"
+SOURCE_SPLIT = "train"
+
+SEED = 42
+
+N_EVAL = 50
+N_TRAIN = 500
+
+MAX_CHARS = 3000
+MIN_CYR = 0.5
+
+
+# ============================================================
+# Tokenizer pinning for v2 token-length filters
+# ============================================================
+
+TOK_ID = "Qwen/Qwen2.5-1.5B-Instruct"
+TOK_REV = "989aa7980e4cf806f80c7fef2b1adb7bc71aa306"
+
+TOK = AutoTokenizer.from_pretrained(
+    TOK_ID,
+    revision=TOK_REV,
+)
+
+# Raw-text rendering, matching the experimentally verified TRL 0.29.1 path:
+# is_conversational=False, chat template not applied.
+#
+# Soup limits:
+#   prompt <= 512
+#   total  <= 1024
+#
+# We keep a small safety margin so final rows should not need Soup truncation.
+PROMPT_TOK_MAX = 500
+TOTAL_TOK_MAX = 1000
+EOS_BUDGET = 1
+
+
+def ntok(text):
+    return len(
+        TOK(
+            text,
+            add_special_tokens=False,
+        )["input_ids"]
+    )
+
+
+# ============================================================
+# Helpers
+# ============================================================
+def trl_boundary_mismatch(prompt, completion):
+    """Match TRL 0.29.1 raw-text DPO preprocessing at the prompt/completion boundary."""
+    assert tok.eos_token is not None
+
+    completion_with_eos = (
+        completion
+        if completion.endswith(tok.eos_token)
+        else completion + tok.eos_token
+    )
+
+    prompt_ids = tok(prompt)["input_ids"]
+    full_ids = tok(prompt + completion_with_eos)["input_ids"]
+
+    return full_ids[:len(prompt_ids)] != prompt_ids
+
+def norm(text):
+    """Whitespace-normalized string for exact overlap checks."""
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def cyr_ratio(text):
+    """
+    Fraction of alphabetic characters that are Cyrillic.
+    Non-letter punctuation/whitespace is ignored.
+    """
+    letters = re.findall(r"[A-Za-zА-Яа-яЁё]", text)
+
+    if not letters:
+        return 0.0
+
+    cyr = sum(
+        bool(re.fullmatch(r"[А-Яа-яЁё]", ch))
+        for ch in letters
+    )
+
+    return cyr / len(letters)
+
+
+def sha256_file(path):
+    h = hashlib.sha256()
+
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(1024 * 1024), b""):
+            h.update(chunk)
+
+    return h.hexdigest()
+
+
+def write_jsonl(path, rows):
+    with open(path, "w", encoding="utf-8") as f:
+        for row in rows:
+            f.write(
+                json.dumps(
+                    row,
+                    ensure_ascii=False,
+                )
+                + "\n"
+            )
+
+
+def char_stats(rows):
+    result = {}
+
+    for field in ("prompt", "chosen", "rejected"):
+        values = [len(row[field]) for row in rows]
+
+        result[field] = {
+            "p50": int(np.percentile(values, 50)),
+            "p90": int(np.percentile(values, 90)),
+            "p99": int(np.percentile(values, 99)),
+            "max": int(max(values)),
+        }
+
+    result["frac_chosen_longer"] = float(
+        np.mean(
+            [
+                len(row["chosen"]) > len(row["rejected"])
+                for row in rows
+            ]
+        )
+    )
+
+    return result
+
+
+def tokq(pairs):
+    def q(values):
+        return {
+            str(p): int(np.percentile(values, p))
+            for p in (50, 90, 99, 100)
+        }
+
+    return {
+        "prompt_tok": q([p for p, _ in pairs]),
+        "total_tok_incl_eos": q([t for _, t in pairs]),
+    }
+
+
+def last_nonempty_line(text):
+    lines = [
+        line.strip()
+        for line in text.splitlines()
+        if line.strip()
+    ]
+
+    return lines[-1] if lines else ""
+
+
+# ============================================================
+# Load exact pinned source revision
+# ============================================================
+
+print("Loading dataset...")
+
+ds = load_dataset(
+    REPO,
+    revision=DATA_REV,
+    split=SOURCE_SPLIT,
+)
+
+print("source rows:", len(ds))
+
+# Deterministic order.
+ds = ds.shuffle(seed=SEED)
+
+
+# ============================================================
+# Build held-out eval first, then train
+# ============================================================
+
+eval_rows = []
+train_rows = []
+
+seen_prompts = set()
+
+# All completions from held-out eval.
+# Train rows are excluded if either completion exactly overlaps one of these.
+eval_completions = set()
+
+drops = Counter()
+
+tokstats = {
+    "eval": [],
+    "train": [],
+}
+
+rows_scanned = 0
+
+
+for source_row in ds:
+    rows_scanned += 1
+
+    p = source_row.get("prompt", "")
+    c = source_row.get("chosen", "")
+    r = source_row.get("rejected", "")
+
+    # --------------------------------------------------------
+    # R1 - empty chosen/rejected
+    # --------------------------------------------------------
+    if not c.strip() or not r.strip():
+        drops["R1_empty"] += 1
+        continue
+
+    # --------------------------------------------------------
+    # R2 - identical chosen/rejected
+    # --------------------------------------------------------
+    if norm(c) == norm(r):
+        drops["R2_identical"] += 1
+        continue
+
+    # --------------------------------------------------------
+    # R3 - Russian/Cyrillic content requirement
+    # --------------------------------------------------------
+    if cyr_ratio(c) < MIN_CYR or cyr_ratio(r) < MIN_CYR:
+        drops["R3_low_cyrillic"] += 1
+        continue
+
+    # --------------------------------------------------------
+    # R4 - provisional character-length filter
+    # --------------------------------------------------------
+    if len(p) + max(len(c), len(r)) > MAX_CHARS:
+        drops["R4_over_3000_chars"] += 1
+        continue
+
+    prompt_key = norm(p)
+
+    # --------------------------------------------------------
+    # R5 - exact normalized prompt duplicate
+    # --------------------------------------------------------
+    if prompt_key in seen_prompts:
+        drops["R5_dup_exact_prompt"] += 1
+        continue
+
+    # --------------------------------------------------------
+    # R7 / R8 - v2 tokenizer-based length filters
+    # --------------------------------------------------------
+
+    pt = ntok(p)
+
+    chosen_tok = ntok(c) + EOS_BUDGET
+    rejected_tok = ntok(r) + EOS_BUDGET
+
+    tt = pt + max(
+        chosen_tok,
+        rejected_tok,
+    )
+
+    # R7: stay safely below Soup's 512-token prompt cap.
+    if pt > PROMPT_TOK_MAX:
+        drops["R7_prompt_over_500_tok"] += 1
+        continue
+
+    # R8: stay safely below Soup's 1024-token sequence cap.
+    if tt > TOTAL_TOK_MAX:
+        drops["R8_total_over_1000_tok"] += 1
+        continue
+
+    # R9: tokenization boundary must match TRL preprocessing.
+    if trl_boundary_mismatch(p, c) or trl_boundary_mismatch(p, r):
+      drops["R9_boundary_tokenization_mismatch"] += 1
+      continue
+
+    # --------------------------------------------------------
+    # R6 - exact normalized completion overlap with eval
+    #
+    # Only applies once held-out eval is complete.
+    # --------------------------------------------------------
+    if len(eval_rows) >= N_EVAL:
+        if (
+            norm(c) in eval_completions
+            or norm(r) in eval_completions
+        ):
+            drops["R6_completion_overlap_with_eval"] += 1
+            continue
+
+    row = {
+        "prompt": p,
+        "chosen": c,
+        "rejected": r,
+    }
+
+    # --------------------------------------------------------
+    # First 50 eligible rows -> held-out evaluation
+    # --------------------------------------------------------
+    if len(eval_rows) < N_EVAL:
+        seen_prompts.add(prompt_key)
+        eval_rows.append(row)
+
+        eval_completions.update(
+            [
+                norm(c),
+                norm(r),
+            ]
+        )
+
+        tokstats["eval"].append(
+            (
+                pt,
+                tt,
+            )
+        )
+
+        continue
+
+    # --------------------------------------------------------
+    # Next 500 eligible rows -> train
+    # --------------------------------------------------------
+    seen_prompts.add(prompt_key)
+    train_rows.append(row)
+
+    tokstats["train"].append(
+        (
+            pt,
+            tt,
+        )
+    )
+
+    if len(train_rows) >= N_TRAIN:
+        break
+
+
+# ============================================================
+# Hard assertions
+# ============================================================
+
+assert len(eval_rows) == N_EVAL, (
+    f"Expected {N_EVAL} eval rows, got {len(eval_rows)}"
+)
+
+assert len(train_rows) == N_TRAIN, (
+    f"Expected {N_TRAIN} train rows, got {len(train_rows)}"
+)
+
+all_tokstats = (
+    tokstats["train"]
+    + tokstats["eval"]
+)
+
+assert max(
+    p
+    for p, _ in all_tokstats
+) <= PROMPT_TOK_MAX
+
+assert max(
+    t
+    for _, t in all_tokstats
+) <= TOTAL_TOK_MAX
+
+
+# ============================================================
+# Train/eval exact-overlap audit
+# ============================================================
+
+train_prompts = {
+    norm(x["prompt"])
+    for x in train_rows
+}
+
+eval_prompts = {
+    norm(x["prompt"])
+    for x in eval_rows
+}
+
+train_chosen = {
+    norm(x["chosen"])
+    for x in train_rows
+}
+
+eval_chosen = {
+    norm(x["chosen"])
+    for x in eval_rows
+}
+
+train_rejected = {
+    norm(x["rejected"])
+    for x in train_rows
+}
+
+eval_rejected = {
+    norm(x["rejected"])
+    for x in eval_rows
+}
+
+train_all_completions = (
+    train_chosen
+    | train_rejected
+)
+
+eval_all_completions = (
+    eval_chosen
+    | eval_rejected
+)
+
+overlap = {
+    "prompt": len(
+        train_prompts
+        & eval_prompts
+    ),
+    "chosen": len(
+        train_chosen
+        & eval_chosen
+    ),
+    "rejected": len(
+        train_rejected
+        & eval_rejected
+    ),
+    "any_completion": len(
+        train_all_completions
+        & eval_all_completions
+    ),
+}
+
+assert overlap["prompt"] == 0
+assert overlap["chosen"] == 0
+assert overlap["rejected"] == 0
+assert overlap["any_completion"] == 0
+
+
+# ============================================================
+# Assistant-marker audit
+# ============================================================
+
+assistant_end_re = re.compile(
+    r"(?:Ассистент|Помощник|Assistant)\s*:\s*$"
+)
+
+prompts_ending_with_assistant_marker = {
+    "train": sum(
+        bool(
+            assistant_end_re.search(
+                x["prompt"]
+            )
+        )
+        for x in train_rows
+    ),
+    "eval": sum(
+        bool(
+            assistant_end_re.search(
+                x["prompt"]
+            )
+        )
+        for x in eval_rows
+    ),
+}
+
+top_prompt_endings = {
+    "train": Counter(
+        last_nonempty_line(
+            x["prompt"]
+        )
+        for x in train_rows
+    ).most_common(10),
+
+    "eval": Counter(
+        last_nonempty_line(
+            x["prompt"]
+        )
+        for x in eval_rows
+    ).most_common(10),
+}
+
+
+# ============================================================
+# Role marker counts
+# ============================================================
+
+role_markers = [
+    "Человек",
+    "Ассистент",
+    "Помощник",
+    "Human",
+    "Assistant",
+]
+
+all_selected_text = "\n".join(
+    row[field]
+    for row in (
+        eval_rows
+        + train_rows
+    )
+    for field in (
+        "prompt",
+        "chosen",
+        "rejected",
+    )
+)
+
+role_marker_counts = {
+    marker: len(
+        re.findall(
+            rf"{re.escape(marker)}\s*:",
+            all_selected_text,
+        )
+    )
+    for marker in role_markers
+}
+
+
+# ============================================================
+# Write final v2 files
+# ============================================================
+
+OUT = Path("data")
+OUT.mkdir(
+    parents=True,
+    exist_ok=True,
+)
+
+train_path = OUT / "train.jsonl"
+eval_path = OUT / "eval.jsonl"
+manifest_path = OUT / "manifest.json"
+
+write_jsonl(
+    train_path,
+    train_rows,
+)
+
+write_jsonl(
+    eval_path,
+    eval_rows,
+)
+
+train_sha = sha256_file(train_path)
+eval_sha = sha256_file(eval_path)
+
+
+# ============================================================
+# Manifest
+# ============================================================
+
+# Make sure zero-count rules are also explicitly visible.
+drop_keys = [
+    "R1_empty",
+    "R2_identical",
+    "R3_low_cyrillic",
+    "R4_over_3000_chars",
+    "R5_dup_exact_prompt",
+    "R6_completion_overlap_with_eval",
+    "R7_prompt_over_500_tok",
+    "R8_total_over_1000_tok",
+    "R9_boundary_tokenization_mismatch",
+]
+
+drop_manifest = {
+    key: int(drops[key])
+    for key in drop_keys
+}
+
+manifest = {
+    "repo": REPO,
+    "revision": DATA_REV,
+    "source_split": SOURCE_SPLIT,
+    "seed": SEED,
+
+    "rows_scanned": rows_scanned,
+
+    "drops": drop_manifest,
+
+    "drop_counter_scope": (
+        "Drop counts apply only to rows scanned until "
+        "50 eval + 500 train rows were collected; "
+        "they are not full-dataset prevalence estimates."
+    ),
+
+    "selection": {
+        "eval": (
+            "first 50 eligible rows after deterministic shuffle"
+        ),
+        "train": (
+            "next 500 eligible rows after deterministic shuffle; "
+            "train completions are excluded if they exactly overlap eval completions"
+        ),
+    },
+
+    "filters": {
+        "MAX_CHARS": MAX_CHARS,
+        "MIN_CYR": MIN_CYR,
+    },
+
+    "tokenizer": {
+        "id": TOK_ID,
+        "revision": TOK_REV,
+        "transformers": transformers.__version__,
+        "tokenizers": tokenizers.__version__,
+
+        "rendering": (
+            "raw text; experimentally verified with TRL 0.29.1: "
+            "is_conversational=False and chat template not applied"
+        ),
+
+        "rules": {
+            "PROMPT_TOK_MAX": PROMPT_TOK_MAX,
+            "TOTAL_TOK_MAX": TOTAL_TOK_MAX,
+            "EOS_BUDGET": EOS_BUDGET,
+            "add_special_tokens": False,
+        },
+    },
+
+    "eval": {
+        "n": len(eval_rows),
+        "sha256": eval_sha,
+        "char_stats": char_stats(eval_rows),
+    },
+
+    "train": {
+        "n": len(train_rows),
+        "sha256": train_sha,
+        "char_stats": char_stats(train_rows),
+    },
+
+    "token_stats": {
+        "train": tokq(
+            tokstats["train"]
+        ),
+        "eval": tokq(
+            tokstats["eval"]
+        ),
+    },
+
+    "train_eval_overlap": overlap,
+
+    "prompts_ending_with_assistant_marker": (
+        prompts_ending_with_assistant_marker
+    ),
+
+    "top_prompt_endings": top_prompt_endings,
+
+    "role_marker_counts_combined": role_marker_counts,
+
+    "superseded_note": (
+        "v1 sample without token rules is preserved in "
+        "data/superseded_v1/. "
+        "Initial audit found 41/500 train prompts above Soup's "
+        "512-token prompt cap; Soup 0.75.1 fallback uses keep_start, "
+        "so those prompts were at risk of tail truncation. "
+        "v2 adds conservative 500/1000 token filters before training."
+    ),
+}
+
+with open(
+    manifest_path,
+    "w",
+    encoding="utf-8",
+) as f:
+    json.dump(
+        manifest,
+        f,
+        ensure_ascii=False,
+        indent=2,
+    )
+
+
+# ============================================================
+# Human-readable output
+# ============================================================
+
+print(
+    json.dumps(
+        manifest,
+        ensure_ascii=False,
+        indent=2,
+    )
+)
+
+print()
+print("WROTE:")
+print(train_path)
+print(eval_path)
+print(manifest_path)
+
+# OUTPUT
+Overwriting prepare_data.py

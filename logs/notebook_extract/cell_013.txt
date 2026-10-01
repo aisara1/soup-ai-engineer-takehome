@@ -1,0 +1,8 @@
+# SOURCE
+!mkdir -p data logs/data
+
+!(date -u; python prepare_data.py) \
+  2>&1 | tee logs/data/prepare_data.log
+
+# OUTPUT
+Wed Sep 30 09:52:19 AM UTC 2026

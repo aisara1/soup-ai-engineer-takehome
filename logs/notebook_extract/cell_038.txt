@@ -1,0 +1,37 @@
+# SOURCE
+!(date -u; soup profile -c soup.yaml) 2>&1 | tee logs/preflight_py312/soup_profile.txt
+
+# OUTPUT
+Wed Sep 30 11:30:41 AM UTC 2026
+╭────────────────────────────── Training Profile ──────────────────────────────╮
+│ Model:     Qwen/Qwen2.5-1.5B-Instruct                                        │
+│ Params:    1.5B (trainable: 12,845,056 with LoRA r=16)                       │
+│ Quantization: none                                                           │
+│ Gradient checkpointing: enabled                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+GPU Memory Estimate:
+  Model                              ~3.0 GB  
+  LoRA                               ~0.0 GB  
+  Optimizer                          ~0.1 GB  
+  Activations (bs=2, seq=1024)       ~0.2 GB  
+  Overhead                           ~1.5 GB  
+  --------------------            ----------  
+  Total                              ~4.7 GB  
+
+╭─────────────────────────────── Speed Estimate ───────────────────────────────╮
+│ Tokens/sec: ~1,250                                                           │
+│ Samples/sec: ~1.2                                                            │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+╭────────────────────────────── Recommendations ───────────────────────────────╮
+│ OK Fits in 15 GB VRAM                                                        │
+│ OK Recommended batch_size: 4                                                 │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+Compatible GPUs:
+  - RTX3070 (8 GB)
+  - RTX3070TI (8 GB)
+  - RTX4060 (8 GB)
+  - RTX3080 (10 GB)
+  - RTX3060 (12 GB)

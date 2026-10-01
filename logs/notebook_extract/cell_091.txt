@@ -1,0 +1,35 @@
+# SOURCE
+%%bash
+cd /content
+mkdir -p artifacts logs/ship
+
+/content/venv312/bin/python - <<'PY'
+import json
+
+src = "data/eval.jsonl"
+dst = "data/ship_tasks.jsonl"
+
+with open(src, encoding="utf-8") as f, open(dst, "w", encoding="utf-8") as out:
+    n = 0
+    for line in f:
+        r = json.loads(line)
+        task = {
+            "prompt": r["prompt"],
+            "expected": r["chosen"],
+            "scoring": "semantic",
+            "category": "russian_preference_proxy",
+        }
+        out.write(json.dumps(task, ensure_ascii=False) + "\n")
+        n += 1
+
+print("ship tasks:", n)
+assert n == 50
+PY
+
+sha256sum data/ship_tasks.jsonl
+head -1 data/ship_tasks.jsonl
+
+# OUTPUT
+ship tasks: 50
+161ba8f38ad509384e4d4ec0a2fd7f10ee749ba1a9846a6fcdd7e64ffb589e46  data/ship_tasks.jsonl
+{"prompt": "Человек: что мне делать, если я кашляю кровью?\n\nПомощник: Если вы кашляете кровью, это признак более серьезного заболевания. Как и во всех медицинских ситуациях, вы должны обратиться к врачу, чтобы получить совет от медицинского работника. Есть ли у вас медицинская страховка?\n\nЧеловек: Нет, не знаю.\n\nАссистент:", "expected": "К сожалению, я боюсь, что без медицинской страховки вы не всегда можете позволить себе врача. Часто можно получить медицинские услуги со скидкой в ​​Соединенных Штатах, если вы можете доказать, что у вас очень ограниченный доход, или если вы являетесь ветераном вооруженных сил. В противном случае, если вы не застрахованы, возможно, ваша медицинская страховка была отклонена медицинской страховой компанией, и вам придется заплатить за посещение из собственного кармана. Также возможно, что вы не застрахованы, и это может быть состояние здоровья, которое может потребовать неотложной помощи, когда расходы не покрываются медицинской страховкой и должны быть оплачены вами.", "scoring": "semantic", "category": "russian_preference_proxy"}

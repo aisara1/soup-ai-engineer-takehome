@@ -1,0 +1,22 @@
+# SOURCE
+!sed -n '65,82p' prepare_data.py
+
+# OUTPUT
+
+# ============================================================
+# Helpers
+# ============================================================
+def trl_boundary_mismatch(prompt, completion):
+    """Match TRL 0.29.1 raw-text DPO preprocessing at the prompt/completion boundary."""
+    assert TOK.eos_token is not None
+
+    completion_with_eos = (
+        completion
+        if completion.endswith(TOK.eos_token)
+        else completion + TOK.eos_token
+    )
+
+    prompt_ids = TOK(prompt)["input_ids"]
+    full_ids = TOK(prompt + completion_with_eos)["input_ids"]
+
+    return full_ids[:len(prompt_ids)] != prompt_ids

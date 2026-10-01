@@ -1,0 +1,5 @@
+# SOURCE
+%env PATH=/content/venv312/bin:/usr/local/nvidia/bin:/usr/local/cuda/bin:/usr/bin:/bin:/usr/local/bin
+
+# OUTPUT
+env: PATH=/content/venv312/bin:/usr/local/nvidia/bin:/usr/local/cuda/bin:/usr/bin:/bin:/usr/local/bin

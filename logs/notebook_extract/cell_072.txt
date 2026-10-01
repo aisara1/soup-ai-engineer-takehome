@@ -1,0 +1,50 @@
+# SOURCE
+%%bash
+/content/venv312/bin/python - <<'PY' 2>&1 | tee logs/data_v3_boundary_audit.txt
+import json
+from transformers import AutoTokenizer
+
+MODEL = "/content/models/qwen2.5-1.5b-pinned"
+tok = AutoTokenizer.from_pretrained(MODEL)
+eos = tok.eos_token
+
+def audit(path):
+    rows = [json.loads(x) for x in open(path)]
+    bad = []
+
+    for i, r in enumerate(rows):
+        p = tok(r["prompt"])["input_ids"]
+
+        for field in ("chosen", "rejected"):
+            c = r[field]
+            if not c.endswith(eos):
+                c += eos
+
+            full = tok(r["prompt"] + c)["input_ids"]
+
+            if full[:len(p)] != p:
+                bad.append((i, field))
+
+    return len(rows), bad
+
+n_train, bad_train = audit("data/train.jsonl")
+n_eval, bad_eval = audit("data/eval.jsonl")
+
+print("train rows:", n_train)
+print("train boundary mismatches:", len(bad_train), bad_train)
+print("eval rows:", n_eval)
+print("eval boundary mismatches:", len(bad_eval), bad_eval)
+
+assert not bad_train
+assert not bad_eval
+
+print("\nBOUNDARY AUDIT PASS")
+PY
+
+# OUTPUT
+train rows: 500
+train boundary mismatches: 0 []
+eval rows: 50
+eval boundary mismatches: 0 []
+
+BOUNDARY AUDIT PASS

@@ -1,0 +1,58 @@
+# SOURCE
+%%bash
+
+/content/venv312/bin/python - <<'PY' 2>&1 | tee logs/train_attempt2/token_boundary_audit.txt
+import json
+from transformers import AutoTokenizer
+
+MODEL = "/content/models/qwen2.5-1.5b-pinned"
+tok = AutoTokenizer.from_pretrained(MODEL)
+eos = tok.eos_token
+
+rows = [json.loads(x) for x in open("data/train.jsonl")]
+
+mismatches = []
+
+for i, r in enumerate(rows):
+    p = tok(r["prompt"])["input_ids"]
+
+    for field in ("chosen", "rejected"):
+        completion = r[field]
+        if not completion.endswith(eos):
+            completion += eos
+
+        full = tok(r["prompt"] + completion)["input_ids"]
+
+        if full[:len(p)] != p:
+            # first differing token position
+            n = min(len(p), len(full))
+            first_diff = next(
+                (j for j in range(n) if p[j] != full[j]),
+                n
+            )
+
+            mismatches.append({
+                "row": i,
+                "field": field,
+                "prompt_tokens": len(p),
+                "full_tokens": len(full),
+                "first_diff_token": first_diff,
+            })
+
+print("completion mismatches:", len(mismatches))
+print("affected rows:", len(set(x["row"] for x in mismatches)))
+print()
+
+for x in mismatches:
+    print(x)
+PY
+
+# OUTPUT
+completion mismatches: 5
+affected rows: 4
+
+{'row': 137, 'field': 'chosen', 'prompt_tokens': 21, 'full_tokens': 179, 'first_diff_token': 20}
+{'row': 137, 'field': 'rejected', 'prompt_tokens': 21, 'full_tokens': 99, 'first_diff_token': 20}
+{'row': 385, 'field': 'chosen', 'prompt_tokens': 294, 'full_tokens': 390, 'first_diff_token': 293}
+{'row': 403, 'field': 'chosen', 'prompt_tokens': 27, 'full_tokens': 216, 'first_diff_token': 26}
+{'row': 405, 'field': 'chosen', 'prompt_tokens': 472, 'full_tokens': 544, 'first_diff_token': 471}

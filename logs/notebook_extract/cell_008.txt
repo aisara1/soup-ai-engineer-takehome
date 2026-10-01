@@ -1,0 +1,84 @@
+# SOURCE
+"""Reproducible DPO sample from d0rj/full-hh-rlhf-ru. Seed 42.
+MAX_CHARS is a PROVISIONAL char-level heuristic, not a proven truncation threshold;
+token-level truncation is validated later with the chosen tokenizer via `soup data doctor`."""
+import json, re, hashlib, collections, numpy as np
+from datasets import load_dataset
+from huggingface_hub import HfApi
+
+REPO, SEED, N_TRAIN, N_EVAL = "d0rj/full-hh-rlhf-ru", 42, 500, 50
+MAX_CHARS = 3000   # provisional heuristic (prompt p99=3619 chars in 2a inspection)
+MIN_CYR = 0.5
+rev = HfApi().dataset_info(REPO).sha
+ds = load_dataset(REPO, revision=rev)
+
+norm = lambda s: re.sub(r"\s+", " ", s).strip().lower()
+def cyr(s):
+    a = [ch for ch in s if ch.isalpha()]
+    return sum(('а' <= ch.lower() <= 'я') or ch in 'ёЁ' for ch in a) / max(1, len(a))
+
+def filt(split, n, excl_prompts=frozenset(), excl_chosen=frozenset()):
+    d = ds[split].shuffle(seed=SEED)
+    drops, out, seen = collections.Counter(), [], set()
+    for ex in d:
+        p, c, r = ex["prompt"], ex["chosen"], ex["rejected"]
+        if not c.strip() or not r.strip():                  drops["R1_empty"] += 1; continue
+        if c.strip() == r.strip():                           drops["R2_identical"] += 1; continue
+        if cyr(c) < MIN_CYR or cyr(r) < MIN_CYR:             drops["R3_low_cyrillic"] += 1; continue
+        if len(p) + max(len(c), len(r)) > MAX_CHARS:         drops["R4_over_max_chars_provisional"] += 1; continue
+        k = norm(p)
+        if k in seen:                                        drops["R5_dup_exact_prompt"] += 1; continue
+        if k in excl_prompts or norm(c) in excl_chosen:      drops["R6_overlap_with_eval"] += 1; continue
+        seen.add(k); out.append({"prompt": p, "chosen": c, "rejected": r})
+        if len(out) == n: break
+    return out, {"split": split, "scanned": sum(drops.values()) + len(out),
+                 "kept": len(out), "drops": dict(drops)}
+
+ev, ev_rep = filt("test", N_EVAL)
+print("DEBUG eval len:", len(ev))
+print("DEBUG eval report:", json.dumps(ev_rep, ensure_ascii=False, indent=2))
+# tr, tr_rep = filt("train", N_TRAIN,
+#                   {norm(x["prompt"]) for x in ev}, {norm(x["chosen"]) for x in ev})
+
+# S = lambda rows, f: {norm(x[f]) for x in rows}
+# overlap = {f + "_exact_norm": len(S(tr, f) & S(ev, f)) for f in ("prompt", "chosen", "rejected")}
+
+# def dump(rows, path):
+#     with open(path, "w", encoding="utf-8") as fh:
+#         for r in rows: fh.write(json.dumps(r, ensure_ascii=False) + "\n")
+#     return hashlib.sha256(open(path, "rb").read()).hexdigest()
+
+# def stats(rows):
+#     q = lambda xs: {p: int(np.percentile(xs, p)) for p in (50, 90, 99, 100)}
+#     c, r = [len(x["chosen"]) for x in rows], [len(x["rejected"]) for x in rows]
+#     return {"prompt_chars": q([len(x["prompt"]) for x in rows]), "chosen_chars": q(c),
+#             "rejected_chars": q(r), "frac_chosen_longer": round(float(np.mean([a > b for a, b in zip(c, r)])), 3)}
+
+# markers = collections.Counter(m for x in tr for m in re.findall(
+#     r"(Человек|Ассистент|Помощник|Human|Assistant)\s*:", x["prompt"]))
+# tails = collections.Counter(x["prompt"].rstrip()[-20:] for x in tr).most_common(5)
+
+# manifest = {"repo": REPO, "revision": rev, "seed": SEED,
+#             "rules": {"MAX_CHARS_provisional": MAX_CHARS, "MIN_CYR": MIN_CYR,
+#                       "dedup_and_overlap": "exact normalized (whitespace+lowercase) equality; near-dups left to soup data lint"},
+#             "train": {**tr_rep, **stats(tr), "sha256": dump(tr, "data/train.jsonl")},
+#             "eval":  {**ev_rep, **stats(ev), "sha256": dump(ev, "data/eval.jsonl")},
+#             "train_eval_overlap": overlap,
+#             "role_markers_in_train_prompts": dict(markers), "top_prompt_endings_train": tails}
+# json.dump(manifest, open("data/manifest.json", "w"), ensure_ascii=False, indent=2)
+# print(json.dumps(manifest, ensure_ascii=False, indent=2))
+# assert len(tr) == N_TRAIN and len(ev) == N_EVAL, "not enough rows after filtering"
+# assert all(v == 0 for v in overlap.values()), "train/eval overlap!"
+
+# OUTPUT
+DEBUG eval len: 0
+DEBUG eval report: {
+  "split": "test",
+  "scanned": 12451,
+  "kept": 0,
+  "drops": {
+    "R3_low_cyrillic": 12361,
+    "R2_identical": 76,
+    "R1_empty": 14
+  }
+}

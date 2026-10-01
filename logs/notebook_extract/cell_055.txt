@@ -1,0 +1,21 @@
+# SOURCE
+%%bash
+
+mkdir -p artifacts logs/verify
+
+(
+  date -u
+  /content/venv312/bin/python verify_training.py --baseline
+) 2>&1 | tee logs/verify/baseline.log
+
+# OUTPUT
+Wed Sep 30 12:56:42 PM UTC 2026
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Loading weights:   0%|          | 0/338 [00:00<?, ?it/s]Loading weights:   0%|          | 1/338 [00:03<17:15,  3.07s/it]Loading weights:  37%|███▋      | 125/338 [00:03<00:03, 53.92it/s]Loading weights:  51%|█████     | 171/338 [00:04<00:03, 46.69it/s]Loading weights:  59%|█████▊    | 198/338 [00:05<00:03, 40.65it/s]Loading weights:  64%|██████▎   | 215/338 [00:05<00:02, 41.32it/s]Loading weights:  67%|██████▋   | 228/338 [00:06<00:02, 40.29it/s]Loading weights:  70%|███████   | 238/338 [00:06<00:02, 37.40it/s]Loading weights:  73%|███████▎  | 246/338 [00:06<00:02, 32.48it/s]Loading weights:  75%|███████▌  | 255/338 [00:07<00:02, 35.01it/s]Loading weights:  77%|███████▋  | 261/338 [00:07<00:02, 32.54it/s]Loading weights:  79%|███████▉  | 267/338 [00:07<00:02, 32.24it/s]Loading weights:  80%|████████  | 272/338 [00:07<00:02, 28.60it/s]Loading weights:  83%|████████▎ | 279/338 [00:08<00:01, 30.38it/s]Loading weights:  84%|████████▎ | 283/338 [00:08<00:02, 25.94it/s]Loading weights:  86%|████████▌ | 291/338 [00:08<00:01, 29.65it/s]Loading weights:  87%|████████▋ | 295/338 [00:08<00:01, 24.87it/s]Loading weights:  90%|████████▉ | 303/338 [00:08<00:01, 30.34it/s]Loading weights:  91%|█████████ | 307/338 [00:09<00:01, 26.01it/s]Loading weights:  93%|█████████▎| 315/338 [00:09<00:00, 31.65it/s]Loading weights:  94%|█████████▍| 319/338 [00:09<00:00, 29.09it/s]Loading weights:  97%|█████████▋| 327/338 [00:09<00:00, 36.94it/s]Loading weights:  98%|█████████▊| 332/338 [00:09<00:00, 33.60it/s]Loading weights: 100%|██████████| 338/338 [00:09<00:00, 34.34it/s]
+[encode] {"special_tokens_default_equals_false": true, "completions_where_separate_tokenization_differs": 0, "completions_total": 100, "max_prompt_tok": 457, "max_total_tok": 872, "soup_cap_noop": true}
+[baseline] {"n": 50, "mean_logp_chosen": -234.9394, "mean_logp_rejected": -250.916, "mean_margin": 15.9766, "median_margin": -5.7593, "frac_chosen_gt_rejected": 0.46, "mean_margin_per_tok": 0.1779}
+[baseline] repeat_max_abs_diff=0.000e+00
+wrote artifacts/baseline_logps.json
+[control_zero_adapter] lora_B tensors=196 nonzero=0 mean_delta=0.000e+00 max_abs_delta=0.000e+00 -> NOT_TRAINED (adapter params absent/zero/not loaded)
+[control_zero_adapter] EXPECTED: NOT_TRAINED -> PASS
+wrote artifacts/control_zero_adapter.json

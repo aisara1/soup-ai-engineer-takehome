@@ -1,0 +1,23 @@
+# SOURCE
+!mkdir -p logs/env_py312
+!(date -u; which python soup; python -V; soup version; \
+  python -c "import torch,transformers,trl,peft,accelerate,bitsandbytes as b; print('torch',torch.__version__,'cuda',torch.version.cuda,'| tf',transformers.__version__,'| trl',trl.__version__,'| peft',peft.__version__,'| accel',accelerate.__version__,'| bnb',b.__version__); print('gpu',torch.cuda.get_device_name(0),torch.cuda.get_device_capability()); print('bf16 native',torch.cuda.is_bf16_supported(including_emulation=False),'| incl emulation',torch.cuda.is_bf16_supported()); x=torch.randn(512,512,device='cuda',dtype=torch.float16); print('fp16 matmul ok', torch.isfinite(x@x).all().item())"; \
+  python -c "import inspect; from soup_cli.utils import gpu; f=gpu.bf16_fp16_flags; print('bf16_fp16_flags', inspect.signature(f)); print('->', f())" ) 2>&1 | tee logs/env_py312/environment.txt
+!pip freeze > logs/env_py312/requirements_lock.txt
+!(date -u; nvidia-smi) > logs/env_py312/nvidia_smi_initial.txt
+
+# OUTPUT
+Wed Sep 30 11:10:29 AM UTC 2026
+/content/venv312/bin/python
+/content/venv312/bin/soup
+Python 3.12.3
+soup v0.75.1
+https://github.com/MakazhanAlpamys/Soup
+torch 2.14.0+cu130 cuda 13.0 | tf 5.17.0 | trl 0.29.1 | peft 0.21.1 | accel 1.15.0 | bnb 0.50.2
+gpu Tesla T4 (7, 5)
+bf16 native False | incl emulation True
+fp16 matmul ok True
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+TypeError: bf16_fp16_flags() missing 1 required positional argument: 'device'
+bf16_fp16_flags (device: 'str', *, allow_mps_bf16: 'bool' = False) -> 'tuple[bool, bool]'

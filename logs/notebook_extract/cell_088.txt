@@ -1,0 +1,106 @@
+# SOURCE
+%%bash
+cd /content
+
+echo "=== INVALIDATING / FALLBACK SIGNALS ==="
+grep -n -iE \
+"traceback|exception|skipp|retry|reduc|halv|auto_find_batch|batch size|overflow|nan|inf\b|meta" \
+logs/train_final_v3/training.log || true
+
+echo
+echo "=== CONTEXT AROUND CUDA ALLOCATION WARNINGS ==="
+grep -n -B3 -A3 -iE "allocation failed|OOM" \
+logs/train_final_v3/training.log || true
+
+echo
+echo "=== SAVED ADAPTER ==="
+ls -lah output/dpo_qwen15b_stream
+
+echo
+echo "=== ADAPTER TENSOR CHECK ==="
+/content/venv312/bin/python - <<'PY'
+from safetensors.torch import load_file
+from pathlib import Path
+
+p = Path("output/dpo_qwen15b_stream/adapter_model.safetensors")
+assert p.exists(), f"missing: {p}"
+
+sd = load_file(str(p))
+b = [k for k in sd if "lora_B" in k]
+
+nonzero = sum(bool(sd[k].abs().sum().item() > 0) for k in b)
+inner = sum(".inner." in k for k in sd)
+meta_like = [k for k, v in sd.items() if str(v.device) == "meta"]
+
+print("total keys:", len(sd))
+print("lora_B tensors:", len(b))
+print("nonzero lora_B:", nonzero)
+print("zero lora_B:", len(b) - nonzero)
+print(".inner. keys:", inner)
+print("meta tensors:", len(meta_like))
+PY
+
+echo
+echo "=== RAW NVIDIA-SMI PEAK ==="
+/content/venv312/bin/python - <<'PY'
+import csv
+
+vals = []
+with open("logs/train_final_v3/nvidia_smi_sampling.csv", newline="") as f:
+    for row in csv.reader(f):
+        if not row:
+            continue
+        try:
+            # timestamp, name, memory.used, memory.total, utilization.gpu
+            vals.append(int(row[2].strip().split()[0]))
+        except (ValueError, IndexError):
+            pass
+
+print("samples:", len(vals))
+print("peak MiB:", max(vals))
+print("peak GiB:", round(max(vals)/1024, 3))
+PY
+
+# OUTPUT
+=== INVALIDATING / FALLBACK SIGNALS ===
+56:[transformers] The model is already on multiple devices. Skipping the move to device specified in `args`.
+
+=== CONTEXT AROUND CUDA ALLOCATION WARNINGS ===
+58-Training started!
+59-
+60-[transformers] The tokenizer has new PAD/BOS/EOS tokens that differ from the model config and generation config. The model config and generation config were aligned accordingly, being updated with the tokenizer's values. Updated tokens: {'bos_token_id': None, 'pad_token_id': 151643}.
+61:  0%|          | 0/63 [00:00<?, ?it/s]  2%|▏         | 1/63 [00:11<11:54, 11.53s/it][W1001 08:06:13.035385157 CUDACachingAllocator.cpp:3934] memory allocation failed with OOM on device 0 while trying to allocate 1453326336 bytes (free: 893190144, total: 15637086208).
+62:  3%|▎         | 2/63 [00:19<09:47,  9.64s/it]  5%|▍         | 3/63 [00:30<09:53,  9.89s/it]  6%|▋         | 4/63 [00:37<08:47,  8.94s/it]  8%|▊         | 5/63 [00:46<08:34,  8.87s/it][W1001 08:06:49.560241350 CUDACachingAllocator.cpp:3934] memory allocation failed with OOM on device 0 while trying to allocate 1853882368 bytes (free: 784138240, total: 15637086208).
+63: 10%|▉         | 6/63 [00:54<08:10,  8.60s/it] 11%|█         | 7/63 [01:03<08:03,  8.64s/it] 13%|█▎        | 8/63 [01:11<07:55,  8.64s/it] 14%|█▍        | 9/63 [01:18<07:12,  8.02s/it] 16%|█▌        | 10/63 [01:27<07:17,  8.25s/it]                                                16%|█▌        | 10/63 [01:27<07:17,  8.25s/it] 17%|█▋        | 11/63 [01:33<06:38,  7.66s/it] 19%|█▉        | 12/63 [01:41<06:29,  7.64s/it] 21%|██        | 13/63 [01:47<06:07,  7.36s/it] 22%|██▏       | 14/63 [01:57<06:41,  8.20s/it] 24%|██▍       | 15/63 [02:04<06:15,  7.82s/it] 25%|██▌       | 16/63 [02:11<05:55,  7.57s/it] 27%|██▋       | 17/63 [02:19<05:42,  7.45s/it] 29%|██▊       | 18/63 [02:24<05:13,  6.98s/it] 30%|███       | 19/63 [02:31<05:04,  6.92s/it] 32%|███▏      | 20/63 [02:39<05:15,  7.33s/it]                                                32%|███▏      | 20/63 [02:39<05:15,  7.33s/it] 33%|███▎      | 21/63 [02:46<04:52,  6.96s/it] 35%|███▍      | 22/63 [02:52<04:35,  6.71s/it] 37%|███▋      | 23/63 [02:58<04:26,  6.66s/it] 38%|███▊      | 24/63 [03:06<04:34,  7.04s/it] 40%|███▉      | 25/63 [03:11<04:07,  6.51s/it] 41%|████▏     | 26/63 [03:21<04:34,  7.42s/it] 43%|████▎     | 27/63 [03:29<04:31,  7.53s/it][W1001 08:09:31.579535286 CUDACachingAllocator.cpp:3934] memory allocation failed with OOM on device 0 while trying to allocate 1960837120 bytes (free: 731709440, total: 15637086208).
+64: 44%|████▍     | 28/63 [03:37<04:31,  7.76s/it] 46%|████▌     | 29/63 [03:46<04:31,  7.99s/it] 48%|████▊     | 30/63 [03:50<03:50,  6.99s/it]                                                48%|████▊     | 30/63 [03:50<03:50,  6.99s/it] 49%|████▉     | 31/63 [03:56<03:32,  6.64s/it] 51%|█████     | 32/63 [04:04<03:34,  6.93s/it] 52%|█████▏    | 33/63 [04:12<03:38,  7.29s/it] 54%|█████▍    | 34/63 [04:17<03:10,  6.57s/it] 56%|█████▌    | 35/63 [04:25<03:19,  7.11s/it] 57%|█████▋    | 36/63 [04:32<03:11,  7.09s/it] 59%|█████▊    | 37/63 [04:41<03:18,  7.62s/it] 60%|██████    | 38/63 [04:47<02:57,  7.10s/it] 62%|██████▏   | 39/63 [04:54<02:52,  7.21s/it] 63%|██████▎   | 40/63 [04:59<02:31,  6.57s/it]                                                63%|██████▎   | 40/63 [04:59<02:31,  6.57s/it] 65%|██████▌   | 41/63 [05:10<02:54,  7.93s/it] 67%|██████▋   | 42/63 [05:19<02:49,  8.09s/it] 68%|██████▊   | 43/63 [05:24<02:25,  7.29s/it] 70%|██████▉   | 44/63 [05:33<02:28,  7.80s/it] 71%|███████▏  | 45/63 [05:41<02:22,  7.89s/it] 73%|███████▎  | 46/63 [05:48<02:05,  7.40s/it] 75%|███████▍  | 47/63 [05:57<02:08,  8.05s/it] 76%|███████▌  | 48/63 [06:04<01:55,  7.67s/it][W1001 08:12:12.816193969 CUDACachingAllocator.cpp:3934] memory allocation failed with OOM on device 0 while trying to allocate 2113929216 bytes (free: 2107441152, total: 15637086208).
+65: 78%|███████▊  | 49/63 [06:16<02:04,  8.90s/it] 79%|███████▉  | 50/63 [06:22<01:46,  8.15s/it]                                                79%|███████▉  | 50/63 [06:22<01:46,  8.15s/it] 81%|████████  | 51/63 [06:29<01:31,  7.61s/it][W1001 08:12:32.327736577 CUDACachingAllocator.cpp:3934] memory allocation failed with OOM on device 0 while trying to allocate 2248146944 bytes (free: 1241317376, total: 15637086208).
+66- 83%|████████▎ | 52/63 [06:37<01:26,  7.86s/it] 84%|████████▍ | 53/63 [06:43<01:14,  7.44s/it] 86%|████████▌ | 54/63 [06:51<01:06,  7.40s/it] 87%|████████▋ | 55/63 [06:57<00:56,  7.10s/it] 89%|████████▉ | 56/63 [07:07<00:54,  7.82s/it] 90%|█████████ | 57/63 [07:15<00:47,  7.88s/it] 92%|█████████▏| 58/63 [07:23<00:39,  7.94s/it] 94%|█████████▎| 59/63 [07:29<00:29,  7.40s/it] 95%|█████████▌| 60/63 [07:34<00:20,  6.67s/it]                                                95%|█████████▌| 60/63 [07:34<00:20,  6.67s/it] 97%|█████████▋| 61/63 [07:44<00:15,  7.58s/it] 98%|█████████▊| 62/63 [07:50<00:07,  7.21s/it]100%|██████████| 63/63 [07:54<00:00,  6.16s/it]                                               100%|██████████| 63/63 [09:49<00:00,  6.16s/it]100%|██████████| 63/63 [09:49<00:00,  9.35s/it]
+67-{'loss': '0.6899', 'grad_norm': '5.871', 'learning_rate': '4.844e-05', 'entropy': '1.556', 'num_tokens': '4.863e+04', 'logits/chosen': '-2.621', 'logits/rejected': '-2.586', 'mean_token_accuracy': '0.5905', 'rewards/chosen': '0.03305', 'rewards/rejected': '0.02593', 'rewards/accuracies': '0.3375', 'rewards/margins': '0.007128', 'logps/chosen': '-214.4', 'logps/rejected': '-184.4', 'epoch': '0.16'}
+68-{'loss': '0.6888', 'grad_norm': '4.609', 'learning_rate': '4.222e-05', 'entropy': '1.643', 'num_tokens': '9.428e+04', 'logits/chosen': '-2.633', 'logits/rejected': '-2.601', 'mean_token_accuracy': '0.581', 'rewards/chosen': '0.1401', 'rewards/rejected': '0.1277', 'rewards/accuracies': '0.525', 'rewards/margins': '0.01235', 'logps/chosen': '-197', 'logps/rejected': '-199', 'epoch': '0.32'}
+
+=== SAVED ADAPTER ===
+total 82M
+drwxr-xr-x 4 root root 4.0K Oct  1 08:16 .
+drwxr-xr-x 3 root root 4.0K Oct  1 08:05 ..
+-rw-r--r-- 1 root root 1.2K Oct  1 08:16 adapter_config.json
+-rw------- 1 root root  71M Oct  1 08:16 adapter_model.safetensors
+-rw-r--r-- 1 root root 2.5K Oct  1 08:16 chat_template.jinja
+drwxr-xr-x 3 root root 4.0K Oct  1 08:15 checkpoint-63
+-rw-r--r-- 1 root root 2.4K Oct  1 08:15 README.md
+drwxr-xr-x 2 root root 4.0K Oct  1 08:16 ref
+-rw-r--r-- 1 root root  693 Oct  1 08:16 tokenizer_config.json
+-rw-r--r-- 1 root root  11M Oct  1 08:16 tokenizer.json
+-rw-r--r-- 1 root root 5.7K Oct  1 08:16 training_args.bin
+
+=== ADAPTER TENSOR CHECK ===
+total keys: 392
+lora_B tensors: 196
+nonzero lora_B: 196
+zero lora_B: 0
+.inner. keys: 0
+meta tensors: 0
+
+=== RAW NVIDIA-SMI PEAK ===
+samples: 770
+peak MiB: 14215
+peak GiB: 13.882

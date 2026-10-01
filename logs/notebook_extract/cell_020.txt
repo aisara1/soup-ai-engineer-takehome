@@ -1,0 +1,187 @@
+# SOURCE
+!mkdir -p logs/preflight
+# 1) config keys vs installed schema
+!(date -u; python check_config_keys.py soup.yaml) 2>&1 | tee logs/preflight/config_keys.txt
+
+# 2) why pip gave 0.72.4: requires_python per release (tests my hypothesis)
+!(date -u; python -c "import json,urllib.request as u; d=json.load(u.urlopen('https://pypi.org/pypi/soup-cli/json')); print('latest', d['info']['version'], d['info']['requires_python']); [print(v, (d['releases'].get(v) or [{}])[0].get('requires_python')) for v in ['0.72.4','0.73.0','0.74.0','0.75.0']]") 2>&1 | tee logs/preflight/soup_versions_pypi.txt
+
+# 3) system / GPU / dtype / RAM / disk (streaming store lives in RAM; shard cache on disk)
+!(date -u; soup doctor --disk; free -h; df -h ~ .; python -c "import torch; print('bf16 native:', torch.cuda.is_bf16_supported(including_emulation=False), '| bf16 incl emulation:', torch.cuda.is_bf16_supported()); print('capability', torch.cuda.get_device_capability())") 2>&1 | tee logs/preflight/system_doctor.txt
+
+# 4) token-level truncation + chat template + loss mask with the real tokenizer
+!(date -u; soup data doctor data/train.jsonl -m Qwen/Qwen2.5-1.5B-Instruct -f dpo --max-length 1024 --sample 500 --show-mask 2 -o logs/preflight/data_doctor_train.json) 2>&1 | tee logs/preflight/data_doctor_train.txt
+!(date -u; soup data doctor data/eval.jsonl  -m Qwen/Qwen2.5-1.5B-Instruct -f dpo --max-length 1024 --sample 50 -o logs/preflight/data_doctor_eval.json) 2>&1 | tee logs/preflight/data_doctor_eval.txt
+
+# OUTPUT
+Wed Sep 30 10:32:48 AM UTC 2026
+schema file: /usr/local/lib/python3.13/dist-packages/soup_cli/config/schema.py
+root model: SoupConfig
+ok       base
+ok       task
+ok       backend
+ok       data
+ok       data.train
+ok       data.format
+ok       data.max_length
+ok       data.val_split
+ok       training
+ok       training.epochs
+ok       training.lr
+ok       training.batch_size
+ok       training.gradient_accumulation_steps
+ok       training.quantization
+ok       training.gradient_checkpointing
+ok       training.stream_layers
+ok       training.stream_source
+ok       training.stream_buffers
+ok       training.dpo_beta
+ok       training.lora
+ok       training.lora.r
+ok       training.lora.alpha
+ok       training.lora.dropout
+ok       training.lora.target_modules
+ok       output
+
+--- data (DataConfig) relevant fields: name | default ---
+  val_split | 0.1
+  raft_shuffle_seed | None
+  replay_seed | None
+  streaming | False
+  eval_on_each_dataset | False
+
+--- training (TrainingConfig) relevant fields: name | default ---
+  warmup_ratio | 0.03
+  scheduler | 'cosine'
+  save_steps | 100
+  logging_steps | 10
+  dpo_beta | 0.1
+  kto_beta | 0.1
+  orpo_beta | 0.1
+  bco_beta | 0.1
+  preference_loss | None
+  dpo_beta_schedule | None
+  dpo_beta_end | None
+  dpo_ref_regen_epochs | None
+  preference_loss_weights | None
+  grpo_beta | 0.1
+  online_dpo_loss_type | 'sigmoid'
+  grpo_fp16 | False
+  ref_model_ema_alpha | None
+  async_grpo_prefetch | False
+  quantize_ref_model | False
+  rl_checkpoint_save_every_steps | None
+  rl_checkpoint_include_ref_model | False
+  reward_hack_beta_floor | 0.02
+  reward_hack_beta_ceil | 1.0
+  reward_hack_signal_target | 0.15
+  yarn_beta_fast | None
+  yarn_beta_slow | None
+  relora_warmup_ratio | 0.1
+  warmup_auto | False
+  auto_mixed_precision | False
+  lisa_interval_steps | 20
+  stream_layers | False
+  stream_source | 'auto'
+  stream_buffers | 2
+  forgetting_eval_steps | 100
+  checkpoint_eval_steps | 200
+  checkpoint_eval_metric | 'composite'
+  checkpoint_eval_tasks | None
+  eval_gate | None
+--- training.lora (LoraConfig) all fields ---
+  r | 64
+  alpha | 16
+  dropout | 0.05
+  target_modules | 'auto'
+  use_dora | False
+  use_rslora | False
+  use_vera | False
+  use_olora | False
+  rank_pattern | None
+  alpha_pattern | None
+  init_strategy | 'random'
+  loftq_iter | 1
+  loftq_bits | 4
+
+UNKNOWN KEYS: none
+Wed Sep 30 10:32:49 AM UTC 2026
+latest 0.75.1 <3.13,>=3.10
+0.72.4 >=3.10
+0.73.0 <3.13,>=3.10
+0.74.0 <3.13,>=3.10
+0.75.0 <3.13,>=3.10
+Wed Sep 30 10:32:49 AM UTC 2026
+Soup Doctor - checking your environment...
+
+╭─────────────────────────────────── System ───────────────────────────────────╮
+│ Python:   3.13.15                                                            │
+│ Platform: Linux 6.6.122+                                                     │
+│ Arch:     x86_64                                                             │
+│ `soup` runs under /usr/bin/python3; `python` on your PATH is                 │
+│ /usr/local/bin/python. site-packages may differ — for any `python -c` check  │
+│ use the soup interpreter explicitly.                                         │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭──────────────────────────────────── GPU ─────────────────────────────────────╮
+│ CUDA:     available (v12.8)                                                  │
+│ GPUs:     1                                                                  │
+│   GPU 0: Tesla T4 (14.6 GB)                                                  │
+╰──────────────────────────────────────────────────────────────────────────────╯
+                             System Resources                              
+┏━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ Resource  ┃ Value                                                       ┃
+┡━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│ RAM       │ 13 GB                                                       │
+│ Disk      │ 64 GB free                                                  │
+│ Disk type │ SATA SSD — layer streaming refuses the disk tier (RAM only) │
+└───────────┴─────────────────────────────────────────────────────────────┘
+
+2026-09-30 10:33:03.214318: I tensorflow/core/platform/cpu_feature_guard.cc:210] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 AVX512F FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+                              Dependencies                              
+┏━━━━━━━━━━━━━━┳━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┓
+┃ Package      ┃ Required ┃  Installed   ┃ Min Version ┃ Status        ┃
+┡━━━━━━━━━━━━━━╇━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━┩
+│ torch        │   yes    │ 2.11.0+cu128 │ >=2.0.0     │ OK            │
+│ transformers │   yes    │    4.57.6    │ >=4.36.0    │ OK            │
+│ peft         │   yes    │    0.20.0    │ >=0.7.0     │ OK            │
+│ trl          │   yes    │    0.24.0    │ >=0.7.0     │ OK            │
+│ datasets     │   yes    │    4.8.5     │ >=2.14.0    │ OK            │
+│ bitsandbytes │   yes    │    0.50.2    │ >=0.41.0    │ OK            │
+│ accelerate   │   yes    │    1.14.0    │ >=0.25.0    │ OK            │
+│ pydantic     │   yes    │    2.13.5    │ >=2.0.0     │ OK            │
+│ typer        │   yes    │    0.20.1    │ >=0.9.0     │ OK            │
+│ rich         │   yes    │    13.9.4    │ >=13.0.0    │ OK            │
+│ pyyaml       │   yes    │    6.0.3     │ >=6.0       │ OK            │
+│ plotext      │   yes    │    6.1.0     │ >=5.2.0     │ OK            │
+│ fastapi      │ optional │   0.141.1    │ >=0.104.0   │ OK            │
+│ uvicorn      │ optional │    0.52.4    │ >=0.24.0    │ OK            │
+│ datasketch   │ optional │    2.0.0     │ >=1.6.0     │ OK            │
+│ lm-eval      │ optional │      -       │ >=0.4.0     │ not installed │
+│ wandb        │ optional │    0.28.1    │ >=0.15.0    │ OK            │
+│ deepspeed    │ optional │      -       │ >=0.12.0    │ not installed │
+│ httpx        │ optional │    0.28.1    │ >=0.24.0    │ OK            │
+│ unsloth      │ optional │      -       │ >=2024.8    │ not installed │
+│ Pillow       │ optional │    11.3.0    │ >=9.0.0     │ OK            │
+│ torchao      │ optional │    0.10.0    │ >=0.4.0     │ OK            │
+│ sglang       │ optional │      -       │ >=0.2.0     │ not installed │
+│ librosa      │ optional │    0.11.0    │ >=0.10.0    │ OK            │
+└──────────────┴──────────┴──────────────┴─────────────┴───────────────┘
+
+All checks passed! Your environment is ready.
+
+GitHub: https://github.com/MakazhanAlpamys/Soup
+               total        used        free      shared  buff/cache   available
+Mem:            12Gi       1.6Gi       4.0Gi       3.3Mi       7.4Gi        11Gi
+Swap:             0B          0B          0B
+Filesystem      Size  Used Avail Use% Mounted on
+overlay         113G   49G   65G  43% /
+overlay         113G   49G   65G  43% /
+bf16 native: False | bf16 incl emulation: True
+capability (7, 5)
+Wed Sep 30 10:33:21 AM UTC 2026
+Error: format='dpo' is preference data — use soup data lint instead of soup data
+doctor.
+Wed Sep 30 10:33:22 AM UTC 2026
+Error: format='dpo' is preference data — use soup data lint instead of soup data
+doctor.

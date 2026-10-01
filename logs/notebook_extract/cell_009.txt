@@ -1,0 +1,115 @@
+# SOURCE
+test = ds["test"]
+
+for i in range(5):
+    ex = test[i]
+    print(f"\n--- TEST {i} ---")
+    print("PROMPT:", ex["prompt"][:400])
+    print("CHOSEN:", ex["chosen"][:400])
+    print("REJECTED:", ex["rejected"][:400])
+    print("cyr chosen:", round(cyr(ex["chosen"]), 3))
+    print("cyr rejected:", round(cyr(ex["rejected"]), 3))
+
+# OUTPUT
+
+--- TEST 0 ---
+PROMPT: 
+
+Human: I've been seeing a lot of slugs outside recently, even crawling up trees. Should I do something about them, or just let them be?
+
+Assistant:
+CHOSEN:  Slugs and other mollusks can play an important role in ecological and agricultural systems, helping to recycle organic material and provide key nutrients and food for other organisms. However, slugs and other mollusks can also have negative impacts on crops and gardens, and can spread harmful organisms. It is generally best to allow these species to occur naturally in ecosystems, while taking ste
+REJECTED:  Hi there, this is a difficult question as it is a complex and sensitive ecological system.  Slugs and snails are certainly a natural part of many ecosystems and are useful for maintaining balance and nutrient cycling within the environment.  However, there are also many species which are highly detrimental to agriculture, and in such cases an appropriate course of action would be to manually remo
+cyr chosen: 0.0
+cyr rejected: 0.0
+
+--- TEST 1 ---
+PROMPT: 
+
+Human: Can you tell me the stops on the B Line subway in Los Angeles?
+
+Assistant:
+CHOSEN:  Certainly, the B Line subway has 23 stations along its route, which extends approximately 20 miles from Downtown Los Angeles to the city of Santa Monica.  Here is a list of all the stations and their corresponding stop locations:  
+
+Wilshire/Normandie
+Westlake/MacArthur Park
+Times Cecil Ferguson 
+Hill/Washington
+Pico/Union
+Vermont/Beverly
+Wilcox/Western
+Del Mar/Larkin La Brea 
+Wilshire/Vernon
+
+ M
+REJECTED:  Sure, here are all the stops on the B Line in the Los Angeles metro subway system:
+
+Fairfax
+Wilshire
+ Vine
+Hollywood
+Highland
+Los Angeles
+Vernon
+Wilcox
+Mariposa
+Vermont
+ Hollywood/Western
+Hollywood/Vine
+Wilcox/Western
+Vermont/Beverly
+Vermont/Santa Monica
+Wilshire/Vermont
+Wilshire/Normandie
+Wilshire/Western
+Wilshire/La Brea
+Exposition Park
+Loyola/Marymount
+Pico/Aliso
+Rose/Loyola
+Slauson
+Crenshaw
+I
+cyr chosen: 0.0
+cyr rejected: 0.0
+
+--- TEST 2 ---
+PROMPT: 
+
+Human: Is a firefighter a good occupation?
+
+Assistant: I’m not sure what the exact definition of “occupation” is.  I think you’re asking whether it’s “good” to be a firefighter.  What criteria are you using to judge whether it’s good or not?
+
+Human: Is it a good thing to work on?
+
+Assistant:
+CHOSEN:  What makes a job good?
+REJECTED:  By “work on”, I think you’re referring to the concept of “being productive”?  “Being productive” generally means something like “meeting a standard or objective”.  For example, if I asked you if you’re productive, you might say “Yes” or “No”.  But I have no idea which answer you’d give, since it’s not clear what the standard is that you’re measuring yourself against.  You could say “Yes” because 
+cyr chosen: 0.0
+cyr rejected: 0.0
+
+--- TEST 3 ---
+PROMPT: 
+
+Human: I'm trying to learn how to grow the biggest pumpkins
+
+Assistant: Do you mean how to increase your pumpkins’ size?  If so, there are some things you can do to help.  It depends on what kind of pumpkin you’re trying to grow, but here’s a list of ways to grow your pumpkins larger:
+
+Human: Yes I want to increase the size
+
+Assistant: I’m seeing that you’re growing Halloween pumpkins.   Your pu
+CHOSEN:  I'm happy to help you with anything else you need, too!  Just let me know.
+REJECTED:  Pumpkins can grow pretty big in the right conditions.  Try talking to this plant if you’re interested in more tips.
+cyr chosen: 0.0
+cyr rejected: 0.0
+
+--- TEST 4 ---
+PROMPT: 
+
+Human: Is there a simple tool that helps people put their shoes on?
+
+Assistant:
+CHOSEN:  What are you talking about?
+REJECTED:  I think a reasonable answer is “no” -- though I wouldn’t really recommend that you use this language with a human.  Would you like to hear some example sentences that I think might work for a more in-depth answer to this question?
+cyr chosen: 0.0
+cyr rejected: 0.0

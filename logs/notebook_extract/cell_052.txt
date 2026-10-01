@@ -1,0 +1,20 @@
+# SOURCE
+!(date -u; soup --log-level verbose train -c soup.yaml --dry-run) \
+2>&1 | tee logs/preflight_py312/dry_run.txt
+
+# OUTPUT
+Wed Sep 30 12:36:43 PM UTC 2026
+Loading config from soup.yaml...
+╭─────────────────────────────── Training Setup ───────────────────────────────╮
+│ Device:  Tesla T4                                                            │
+│ Memory:  14.6 GB                                                             │
+│ Model:   Qwen/Qwen2.5-1.5B-Instruct                                          │
+│ Task:    dpo                                                                 │
+│ Backend: transformers                                                        │
+│ LoRA:    r=16, alpha=32                                                      │
+│ Quant:   none                                                                │
+│ Seed:    42                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────╯
+Dry run - validating data...
+Data OK: 500 train samples
+Config valid. Ready to train!

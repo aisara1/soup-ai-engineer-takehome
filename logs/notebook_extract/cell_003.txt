@@ -1,0 +1,6 @@
+# SOURCE
+!soup version | tee logs/soup_version.txt
+
+# OUTPUT
+soup v0.72.4
+https://github.com/MakazhanAlpamys/Soup

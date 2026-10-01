@@ -1,0 +1,19 @@
+# SOURCE
+%%bash
+/content/venv312/bin/soup train --dry-run
+
+# OUTPUT
+Loading config from soup.yaml...
+╭─────────────────────────────── Training Setup ───────────────────────────────╮
+│ Device:  Tesla T4                                                            │
+│ Memory:  14.6 GB                                                             │
+│ Model:   /content/models/qwen2.5-1.5b-pinned                                 │
+│ Task:    dpo                                                                 │
+│ Backend: transformers                                                        │
+│ LoRA:    r=16, alpha=32                                                      │
+│ Quant:   none                                                                │
+│ Seed:    42                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────╯
+Dry run - validating data...
+Data OK: 500 train samples
+Config valid. Ready to train!

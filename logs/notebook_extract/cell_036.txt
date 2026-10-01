@@ -1,0 +1,28 @@
+# SOURCE
+!(date -u; python token_audit.py) 2>&1 | tee logs/preflight_py312/token_audit.txt
+
+# OUTPUT
+Wed Sep 30 11:19:20 AM UTC 2026
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+
+=== train ===
+rows: 500
+prompt tokens p50/p90/p99/max: 161 476 781 1000
+chosen total p50/p90/p99/max: 287 657 925 1129
+rejected total p50/p90/p99/max: 282 650 951 1099
+prompt > 512: 41/500 (8.2%)
+chosen total > 1024: 2/500 (0.4%)
+rejected total > 1024: 2/500 (0.4%)
+either branch > 1024: 2/500 (0.4%)
+asymmetric overflow: 0/500 (0.0%)
+
+=== eval ===
+rows: 50
+prompt tokens p50/p90/p99/max: 159 439 626 626
+chosen total p50/p90/p99/max: 278 644 872 872
+rejected total p50/p90/p99/max: 287 587 871 871
+prompt > 512: 2/50 (4.0%)
+chosen total > 1024: 0/50 (0.0%)
+rejected total > 1024: 0/50 (0.0%)
+either branch > 1024: 0/50 (0.0%)
+asymmetric overflow: 0/50 (0.0%)

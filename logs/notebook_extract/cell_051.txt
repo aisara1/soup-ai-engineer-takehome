@@ -1,0 +1,69 @@
+# SOURCE
+!for f in train eval; do \
+  (date -u; soup data validate data/$f.jsonl --format dpo) 2>&1 | tee logs/data_v2/validate_$f.txt; \
+  (date -u; soup data lint data/$f.jsonl --format dpo -o logs/data_v2/lint_$f.json) 2>&1 | tee logs/data_v2/lint_$f.txt; \
+done
+
+# OUTPUT
+Wed Sep 30 12:35:00 PM UTC 2026
+Dataset is valid!
+
+500/500 rows valid for dpo format
+Wed Sep 30 12:35:05 PM UTC 2026
+                              soup data lint (dpo)                              
+┏━━━━━━━━━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ Check           ┃ Verdict ┃ Message                ┃ Evidence                ┃
+┡━━━━━━━━━━━━━━━━━╇━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│ length_bias     │ OK      │ effect size (Cohen's   │ mean chosen=54.5, mean  │
+│                 │         │ d) = 0.114 (chosen     │ rejected=49.7           │
+│                 │         │ longer than rejected); │                         │
+│                 │         │ chosen is longer in    │                         │
+│                 │         │ 54.2% of rows          │                         │
+│ identical_pairs │ OK      │ 0/500 rows (0.0%) have │                         │
+│                 │         │ chosen == rejected     │                         │
+│                 │         │ (zero preference       │                         │
+│                 │         │ signal)                │                         │
+│ near_duplicates │ OK      │ 0/500 rows (0.0%) have │ threshold=0.85          │
+│                 │         │ a near-duplicate       │                         │
+│                 │         │ elsewhere in the       │                         │
+│                 │         │ dataset                │                         │
+│ prompt_leak     │ OK      │ 0/500 rows (0.0%) have │ min_prompt_len=40       │
+│                 │         │ the prompt echoed      │                         │
+│                 │         │ verbatim inside the    │                         │
+│                 │         │ completion             │                         │
+└─────────────────┴─────────┴────────────────────────┴─────────────────────────┘
+╭───────── overall ─────────╮
+│ OK — 500/500 rows scanned │
+╰───────────────────────────╯
+Wrote logs/data_v2/lint_train.json
+Wed Sep 30 12:35:10 PM UTC 2026
+Dataset is valid!
+
+50/50 rows valid for dpo format
+Wed Sep 30 12:35:11 PM UTC 2026
+                              soup data lint (dpo)                              
+┏━━━━━━━━━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ Check           ┃ Verdict ┃ Message                ┃ Evidence                ┃
+┡━━━━━━━━━━━━━━━━━╇━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│ length_bias     │ OK      │ effect size (Cohen's   │ mean chosen=58.6, mean  │
+│                 │         │ d) = 0.003 (chosen     │ rejected=58.5           │
+│                 │         │ longer than rejected); │                         │
+│                 │         │ chosen is longer in    │                         │
+│                 │         │ 56.0% of rows          │                         │
+│ identical_pairs │ OK      │ 0/50 rows (0.0%) have  │                         │
+│                 │         │ chosen == rejected     │                         │
+│                 │         │ (zero preference       │                         │
+│                 │         │ signal)                │                         │
+│ near_duplicates │ OK      │ 0/50 rows (0.0%) have  │ threshold=0.85          │
+│                 │         │ a near-duplicate       │                         │
+│                 │         │ elsewhere in the       │                         │
+│                 │         │ dataset                │                         │
+│ prompt_leak     │ OK      │ 0/50 rows (0.0%) have  │ min_prompt_len=40       │
+│                 │         │ the prompt echoed      │                         │
+│                 │         │ verbatim inside the    │                         │
+│                 │         │ completion             │                         │
+└─────────────────┴─────────┴────────────────────────┴─────────────────────────┘
+╭──────── overall ────────╮
+│ OK — 50/50 rows scanned │
+╰─────────────────────────╯
+Wrote logs/data_v2/lint_eval.json

@@ -1,0 +1,69 @@
+# SOURCE
+%%bash
+
+/content/venv312/bin/python - <<'PY'
+import json, hashlib
+from transformers import AutoTokenizer
+
+EXPECTED_EVAL = "ae130e18936df26dbd9db8921f2c131bff394236cb620e7ec2c12ed834c6b4c2"
+MODEL = "/content/models/qwen2.5-1.5b-pinned"
+
+def sha256(path):
+    with open(path, "rb") as f:
+        return hashlib.sha256(f.read()).hexdigest()
+
+train = [json.loads(x) for x in open("data/train.jsonl")]
+eval_rows = [json.loads(x) for x in open("data/eval.jsonl")]
+manifest = json.load(open("data/manifest.json"))
+
+print("train rows:", len(train))
+print("eval rows:", len(eval_rows))
+print("train sha256:", sha256("data/train.jsonl"))
+print("eval sha256 :", sha256("data/eval.jsonl"))
+print("eval unchanged:", sha256("data/eval.jsonl") == EXPECTED_EVAL)
+print("R9 drops:", manifest["drops"].get("R9_boundary_tokenization_mismatch"))
+
+tok = AutoTokenizer.from_pretrained(MODEL)
+eos = tok.eos_token
+
+def count_mismatches(rows):
+    bad = []
+    for i, r in enumerate(rows):
+        p = tok(r["prompt"])["input_ids"]
+        for field in ("chosen", "rejected"):
+            c = r[field]
+            if not c.endswith(eos):
+                c += eos
+            full = tok(r["prompt"] + c)["input_ids"]
+            if full[:len(p)] != p:
+                bad.append((i, field))
+    return bad
+
+bad_train = count_mismatches(train)
+bad_eval = count_mismatches(eval_rows)
+
+print("train boundary mismatches:", len(bad_train), bad_train[:10])
+print("eval boundary mismatches :", len(bad_eval), bad_eval[:10])
+
+assert len(train) == 500
+assert len(eval_rows) == 50
+assert sha256("data/eval.jsonl") == EXPECTED_EVAL, "EVAL CHANGED — baseline must be redone"
+assert not bad_train, "train still contains boundary mismatches"
+assert not bad_eval, "eval contains boundary mismatches"
+
+print("\nALL CHECKS PASS")
+PY
+
+# OUTPUT
+train rows: 500
+eval rows: 50
+train sha256: 53dee71a59fed7a8103c59fc6e6cfb58d9016c6a74d7b89e5a74710490477027
+eval sha256 : ae130e18936df26dbd9db8921f2c131bff394236cb620e7ec2c12ed834c6b4c2
+eval unchanged: True
+R9 drops: None
+train boundary mismatches: 5 [(137, 'chosen'), (137, 'rejected'), (385, 'chosen'), (403, 'chosen'), (405, 'chosen')]
+eval boundary mismatches : 0 []
+Traceback (most recent call last):
+  File "<stdin>", line 47, in <module>
+AssertionError: train still contains boundary mismatches
+ERROR: CalledProcessError: Command 'b'\n/content/venv312/bin/python - <<\'PY\'\nimport json, hashlib\nfrom transformers import AutoTokenizer\n\nEXPECTED_EVAL = "ae130e18936df26dbd9db8921f2c131bff394236cb620e7ec2c12ed834c6b4c2"\nMODEL = "/content/models/qwen2.5-1.5b-pinned"\n\ndef sha256(path):\n    with open(path, "rb") as f:\n        return hashlib.sha256(f.read()).hexdigest()\n\ntrain = [json.loads(x) for x in open("data/train.jsonl")]\neval_rows = [json.loads(x) for x in open("data/eval.jsonl")]\nmanifest = json.load(o

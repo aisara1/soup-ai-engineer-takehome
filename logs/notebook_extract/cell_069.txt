@@ -1,0 +1,16 @@
+# SOURCE
+from pathlib import Path
+
+p = Path("prepare_data.py")
+text = p.read_text()
+
+text = text.replace("tok.eos_token", "TOK.eos_token")
+text = text.replace("tok(prompt)", "TOK(prompt)")
+text = text.replace("tok(prompt + completion_with_eos)", "TOK(prompt + completion_with_eos)")
+
+p.write_text(text)
+
+print("saved")
+
+# OUTPUT
+saved

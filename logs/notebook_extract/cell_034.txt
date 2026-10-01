@@ -1,0 +1,121 @@
+# SOURCE
+%%bash
+
+SOUP=$(python -c "import soup_cli, os; print(os.path.dirname(soup_cli.__file__))")
+
+(
+date -u
+echo "SOUP SOURCE: $SOUP"
+
+echo
+echo "=== DPO TRAINER: lengths / precision / reference / streaming ==="
+grep -n -iE \
+"max_prompt_length|max_length|enforce_preference_sequence_limit|bf16_fp16_flags|resolve_frozen_base_load_dtype|materialize_meta_adapter_copy|stream_layers|DPOConfig|beta=" \
+"$SOUP/trainer/dpo.py"
+
+echo
+echo "=== GPU PRECISION HELPERS ==="
+grep -n -A35 -E \
+"def bf16_fp16_flags|def resolve_frozen_base_load_dtype" \
+"$SOUP/utils/gpu.py"
+
+) 2>&1 | tee logs/preflight_py312/dpo_source_audit.txt
+
+# OUTPUT
+Wed Sep 30 11:16:46 AM UTC 2026
+SOUP SOURCE: /content/venv312/lib/python3.12/site-packages/soup_cli
+
+=== DPO TRAINER: lengths / precision / reference / streaming ===
+12:    bf16_fp16_flags,
+16:    resolve_frozen_base_load_dtype,
+76:        from trl import DPOConfig, DPOTrainer
+80:            enforce_preference_sequence_limit,
+99:        use_streaming = bool(getattr(tcfg, "stream_layers", False))
+132:                seq_length=cfg.data.max_length,
+166:        _bf16, _fp16 = bf16_fp16_flags(self.device, allow_mps_bf16=True)
+167:        dpo_config = DPOConfig(
+184:                tcfg.gradient_checkpointing, stream_layers=tcfg.stream_layers
+200:            beta=tcfg.dpo_beta,
+201:            max_length=cfg.data.max_length,
+202:            # #326 — trl dropped `max_prompt_length` from DPOConfig at 0.29.0
+203:            # with no successor field; `max_length` absorbs it. Asked of the
+206:            **prompt_length_kwargs(DPOConfig, cfg.data.max_length // 2),
+219:        if not config_accepts(DPOConfig, "max_prompt_length"):
+221:            # max_length enforcement to callers. Cap the prepared token ids so
+224:                "max_length": cfg.data.max_length,
+225:                "max_prompt_length": cfg.data.max_length // 2,
+228:            self.trainer.train_dataset = enforce_preference_sequence_limit(
+232:                self.trainer.eval_dataset = enforce_preference_sequence_limit(
+235:        if tcfg.stream_layers:
+240:            from soup_cli.utils.layer_stream_runtime import materialize_meta_adapter_copy
+242:            materialize_meta_adapter_copy(self.model)
+297:            "torch_dtype": resolve_frozen_base_load_dtype(self.device),
+356:            max_seq_length=cfg.data.max_length,
+
+=== GPU PRECISION HELPERS ===
+451:def bf16_fp16_flags(
+452-    device: str, *, allow_mps_bf16: bool = False
+453-) -> tuple[bool, bool]:
+454-    """``(bf16, fp16)`` for ``TrainingArguments`` on ``device``.
+455-
+456-    bf16 where the card has it, fp16 where CUDA requires it, neither on CPU.
+457-    MPS is opt-in per trainer until that trainer has a real Apple Silicon smoke:
+458-    several audio/vision kernels have a different support surface from causal-LM
+459-    text training, so a successful scalar allocation cannot certify every task.
+460-
+461-    A ``"cuda"`` string with no CUDA runtime behind it gets neither, rather than
+462-    fp16 on a card that is not there — the run cannot proceed either way, and
+463-    asking for mixed precision on a phantom device only obscures the real error.
+464-    """
+465-    device_name = str(device).lower()
+466-    if device_name.startswith("mps"):
+467-        return (allow_mps_bf16 and mps_supports_bf16(), False)
+468-    if not device_name.startswith("cuda"):
+469-        return (False, False)
+470-    try:
+471-        import torch
+472-
+473-        if not torch.cuda.is_available():
+474-            return (False, False)
+475-    except (ImportError, RuntimeError, AssertionError, OSError):
+476-        return (False, False)
+477-    supported = cuda_supports_bf16()
+478-    return (supported, not supported)
+479-
+480-
+481:def resolve_frozen_base_load_dtype(device: str):
+482-    """``torch_dtype`` for ``from_pretrained`` when loading a frozen (LoRA) base.
+483-
+484-    A frozen base never receives an optimizer step, so there is no reason to
+485-    upcast it to the HF default of float32 on load: keep the checkpoint's own
+486-    dtype (``"auto"``). The one exception is a pre-Ampere CUDA card (T4, P100,
+487-    V100, GTX 16xx, RTX 20xx): ``bf16_fp16_flags`` already routes mixed
+488-    precision compute to float16 there, since those cards have no bf16 units.
+489-    An ``"auto"`` load of a bf16-saved checkpoint would then leave the
+490-    resident weights in bf16 storage while every other tensor on the card is
+491-    float16, the same storage/compute split v0.73.1 (#385/#387) removed from
+492-    the other bf16-hardcoded call sites. Returning ``torch.float16`` there
+493-    keeps storage and compute in the same dtype. On CPU this still returns
+494-    ``"auto"``: the VRAM-saving reason for keeping the checkpoint's own dtype
+495-    does not apply there, but CPU use in this codebase is smoke tests only,
+496-    so a bf16-saved checkpoint loading bf16 on CPU is harmless in practice.
+497-    """
+498-    _, fp16_only = bf16_fp16_flags(device)
+499-    if fp16_only:
+500-        import torch
+501-
+502-        return torch.float16
+503-    return "auto"
+504-
+505-
+506-def resolve_base_load_dtype(device: str, *, full_finetune: bool):
+507-    """Resolve model-load dtype without drifting between trainer wrappers.
+508-
+509-    An optimizer that steps the base needs explicit fp32 master weights. A
+510-    frozen LoRA base instead keeps the checkpoint/card-aware policy above.
+511-    """
+512-    if full_finetune:
+513-        import torch
+514-
+515-        return torch.float32
+516-    return resolve_frozen_base_load_dtype(device)

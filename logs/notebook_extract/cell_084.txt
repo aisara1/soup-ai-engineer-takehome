@@ -1,0 +1,15 @@
+# SOURCE
+%%bash
+cd /content
+
+/content/venv312/bin/python materialize_model.py \
+  2>&1 | tee logs/model_materialization_final.txt
+
+# OUTPUT
+Fetching 7 files:   0%|          | 0/7 [00:00<?, ?it/s]Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Fetching 7 files:  86%|████████▌ | 6/7 [00:00<00:00, 24.08it/s]Fetching 7 files:  86%|████████▌ | 6/7 [00:20<00:00, 24.08it/s]Fetching 7 files: 100%|██████████| 7/7 [01:09<00:00, 13.42s/it]Fetching 7 files: 100%|██████████| 7/7 [01:09<00:00,  9.98s/it]
+snapshot: /root/.cache/huggingface/hub/models--Qwen--Qwen2.5-1.5B-Instruct/snapshots/989aa7980e4cf806f80c7fef2b1adb7bc71aa306
+local model: /content/models/qwen2.5-1.5b-pinned
+weight sha256: dd924a11b4c220f385b51ffa522daea7c9f3d850e31b162bb5661df483c6d3ee
+expected     : dd924a11b4c220f385b51ffa522daea7c9f3d850e31b162bb5661df483c6d3ee
+LOCAL MODEL PASS

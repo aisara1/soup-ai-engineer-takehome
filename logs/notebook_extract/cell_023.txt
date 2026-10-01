@@ -1,0 +1,12 @@
+# SOURCE
+!which python
+!which soup
+!python -V
+!soup version
+
+# OUTPUT
+/content/venv312/bin/python
+/content/venv312/bin/soup
+Python 3.12.3
+soup v0.75.1
+https://github.com/MakazhanAlpamys/Soup

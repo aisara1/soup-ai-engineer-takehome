@@ -1,0 +1,14 @@
+# SOURCE
+chosen_ratios = [cyr(x) for x in test["chosen"][:2000]]
+rejected_ratios = [cyr(x) for x in test["rejected"][:2000]]
+
+print("chosen cyr median:", np.median(chosen_ratios))
+print("rejected cyr median:", np.median(rejected_ratios))
+print("chosen >= 0.5:", np.mean(np.array(chosen_ratios) >= 0.5))
+print("rejected >= 0.5:", np.mean(np.array(rejected_ratios) >= 0.5))
+
+# OUTPUT
+chosen cyr median: 0.0
+rejected cyr median: 0.0
+chosen >= 0.5: 0.0
+rejected >= 0.5: 0.0

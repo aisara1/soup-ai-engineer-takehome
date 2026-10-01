@@ -1,0 +1,24 @@
+# SOURCE
+%%bash
+/content/venv312/bin/uv pip install \
+  --python /content/venv312/bin/python \
+  "transformers==5.17.0"
+
+echo "=== CHECK ==="
+/content/venv312/bin/python - <<'PY'
+import torch, transformers, trl, peft, accelerate
+print("torch:", torch.__version__)
+print("transformers:", transformers.__version__)
+print("trl:", trl.__version__)
+print("peft:", peft.__version__)
+print("accelerate:", accelerate.__version__)
+PY
+
+# OUTPUT
+=== CHECK ===
+torch: 2.14.1+cu130
+transformers: 5.18.0
+trl: 0.29.1
+peft: 0.21.1
+accelerate: 1.15.0
+bash: line 1: /content/venv312/bin/uv: No such file or directory

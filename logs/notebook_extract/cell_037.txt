@@ -1,0 +1,500 @@
+# SOURCE
+from datetime import datetime, timezone
+from pathlib import Path
+from transformers import AutoConfig
+
+# ------------------------------------------------------------
+# PRE-TRAINING MEMORY BUDGET
+# Qwen2.5-1.5B-Instruct + DPO + LoRA r=16 + layer streaming
+# This is an estimate, NOT a measurement.
+# ------------------------------------------------------------
+
+MODEL = "Qwen/Qwen2.5-1.5B-Instruct"
+
+# Our soup.yaml
+BATCH_SIZE = 2
+MAX_LENGTH = 1024
+MAX_PROMPT_LENGTH = 512
+LORA_R = 16
+STREAM_BUFFERS = 2
+
+# DPO concatenates chosen + rejected
+EFFECTIVE_SEQUENCES = BATCH_SIZE * 2
+
+cfg = AutoConfig.from_pretrained(MODEL)
+
+H = cfg.hidden_size
+I = cfg.intermediate_size
+N_LAYERS = cfg.num_hidden_layers
+N_HEADS = cfg.num_attention_heads
+N_KV_HEADS = cfg.num_key_value_heads
+VOCAB = cfg.vocab_size
+HEAD_DIM = getattr(cfg, "head_dim", H // N_HEADS)
+KV_OUT = N_KV_HEADS * HEAD_DIM
+Q_OUT = N_HEADS * HEAD_DIM
+
+ATTN_BIAS = bool(getattr(cfg, "attention_bias", True))
+TIED_EMBEDDINGS = bool(getattr(cfg, "tie_word_embeddings", True))
+
+MiB = 1024**2
+GiB = 1024**3
+
+def mib(x):
+    return x / MiB
+
+def gib(x):
+    return x / GiB
+
+
+# ------------------------------------------------------------
+# 1. BASE MODEL PARAMETER COUNT
+# ------------------------------------------------------------
+
+# Qwen2 attention
+q_params = H * Q_OUT + (Q_OUT if ATTN_BIAS else 0)
+k_params = H * KV_OUT + (KV_OUT if ATTN_BIAS else 0)
+v_params = H * KV_OUT + (KV_OUT if ATTN_BIAS else 0)
+o_params = Q_OUT * H
+
+# SwiGLU MLP: gate_proj, up_proj, down_proj
+mlp_params = (H * I) + (H * I) + (I * H)
+
+# two RMSNorms per decoder layer
+norm_params = 2 * H
+
+params_per_layer = (
+    q_params + k_params + v_params + o_params
+    + mlp_params + norm_params
+)
+
+embedding_params = VOCAB * H
+final_norm_params = H
+
+# Qwen ties lm_head to embedding by default
+lm_head_extra_params = 0 if TIED_EMBEDDINGS else VOCAB * H
+
+base_params = (
+    embedding_params
+    + N_LAYERS * params_per_layer
+    + final_norm_params
+    + lm_head_extra_params
+)
+
+full_base_fp16 = base_params * 2
+
+
+# ------------------------------------------------------------
+# 2. LAYER STREAMING
+# ------------------------------------------------------------
+
+layer_fp16 = params_per_layer * 2
+
+# Working assumption:
+# non-layer embeddings/final norm stay resident on GPU,
+# while STREAM_BUFFERS decoder layers are resident at a time.
+streamed_base_gpu = (
+    embedding_params * 2
+    + final_norm_params * 2
+    + lm_head_extra_params * 2
+    + STREAM_BUFFERS * layer_fp16
+)
+
+
+# ------------------------------------------------------------
+# 3. LoRA PARAMETERS
+# Targets:
+# q, k, v, o, gate, up, down
+# LoRA params for a Linear = r * (in_features + out_features)
+# ------------------------------------------------------------
+
+lora_per_layer = LORA_R * (
+    (H + Q_OUT)       # q
+    + (H + KV_OUT)    # k
+    + (H + KV_OUT)    # v
+    + (Q_OUT + H)     # o
+    + (H + I)         # gate
+    + (H + I)         # up
+    + (I + H)         # down
+)
+
+lora_params = lora_per_layer * N_LAYERS
+
+# Conservative assumption: trainable LoRA tensors are fp32
+lora_weights = lora_params * 4
+lora_gradients = lora_params * 4
+
+# AdamW m + v states, fp32
+optimizer_states = lora_params * 4 * 2
+
+# DPO reference adapter snapshot.
+# Soup streaming does NOT need a second full base model.
+reference_adapter = lora_params * 4
+
+
+# ------------------------------------------------------------
+# 4. ACTIVATIONS
+# ------------------------------------------------------------
+
+# One fp16 hidden-state boundary for effective DPO batch
+one_hidden = (
+    EFFECTIVE_SEQUENCES
+    * MAX_LENGTH
+    * H
+    * 2
+)
+
+# Approximate checkpoint boundary storage if one input activation
+# is retained per decoder layer.
+checkpoint_boundaries = one_hidden * N_LAYERS
+
+# Approximate transient attention score tensor if materialized:
+# [B_eff, heads, seq, seq], fp16.
+# SDPA/Flash-style kernels can make actual memory smaller.
+attention_scores = (
+    EFFECTIVE_SEQUENCES
+    * N_HEADS
+    * MAX_LENGTH
+    * MAX_LENGTH
+    * 2
+)
+
+# gate + up projections in the MLP, fp16
+mlp_gate_up = (
+    EFFECTIVE_SEQUENCES
+    * MAX_LENGTH
+    * I
+    * 2                 # gate + up
+    * 2                 # fp16 bytes
+)
+
+
+# ------------------------------------------------------------
+# 5. LOGITS
+# ------------------------------------------------------------
+
+# Conservative upper bound:
+# [chosen+rejected batch, 1024 positions, vocab], fp16
+#
+# TRL/Qwen may retain only completion logits, making actual usage lower,
+# but we keep the full capped length as a safe pre-run upper bound.
+logits_upper = (
+    EFFECTIVE_SEQUENCES
+    * MAX_LENGTH
+    * VOCAB
+    * 2
+)
+
+
+# ------------------------------------------------------------
+# 6. WORKING PEAK ESTIMATE
+# ------------------------------------------------------------
+
+persistent = (
+    streamed_base_gpu
+    + lora_weights
+    + lora_gradients
+    + optimizer_states
+    + reference_adapter
+)
+
+# Conservative: count both major transient activation terms,
+# checkpoint boundaries and the logits upper bound.
+accounted_peak = (
+    persistent
+    + checkpoint_boundaries
+    + attention_scores
+    + mlp_gate_up
+    + logits_upper
+)
+
+# CUDA context, allocator fragmentation, kernels, temporary optimizer
+# buffers and framework allocations are not captured exactly.
+overhead_low = 1.0 * GiB
+overhead_high = 2.5 * GiB
+
+predicted_low = accounted_peak + overhead_low
+predicted_high = accounted_peak + overhead_high
+
+
+# ------------------------------------------------------------
+# REPORT
+# ------------------------------------------------------------
+
+timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+
+report = f"""
+# Pre-training memory budget
+
+Timestamp: {timestamp}
+
+**This estimate was recorded before `soup profile`, dry-run, or training.**
+
+## Configuration
+
+- Model: {MODEL}
+- Hidden size: {H}
+- Intermediate size: {I}
+- Layers: {N_LAYERS}
+- Attention heads / KV heads: {N_HEADS} / {N_KV_HEADS}
+- Vocabulary: {VOCAB}
+- Batch size: {BATCH_SIZE}
+- DPO effective chosen+rejected sequences: {EFFECTIVE_SEQUENCES}
+- max_length: {MAX_LENGTH}
+- max_prompt_length: {MAX_PROMPT_LENGTH}
+- LoRA rank: {LORA_R}
+- stream_buffers: {STREAM_BUFFERS}
+- quantization: none
+- compute/base dtype on T4: fp16
+
+## 1. Base weights
+
+Calculated base parameters: {base_params:,} ({base_params/1e9:.3f} B)
+
+Full resident fp16 base:
+{base_params:,} params × 2 bytes
+= {gib(full_base_fp16):.3f} GiB
+
+One decoder layer:
+{params_per_layer:,} params × 2 bytes
+= {mib(layer_fp16):.1f} MiB
+
+Two streamed layer buffers:
+2 × {mib(layer_fp16):.1f}
+= {mib(STREAM_BUFFERS * layer_fp16):.1f} MiB
+
+Embeddings / non-layer resident working estimate:
+embedding = {mib(embedding_params * 2):.1f} MiB
+
+Estimated streamed base resident on GPU:
+≈ {mib(streamed_base_gpu):.1f} MiB
+= {gib(streamed_base_gpu):.3f} GiB
+
+The full fp16 base still needs roughly {gib(full_base_fp16):.3f} GiB of host-side
+storage for RAM streaming, excluding framework/cache overhead.
+
+## 2. LoRA + optimizer state
+
+LoRA trainable parameters:
+{lora_params:,}
+
+LoRA weights, fp32:
+{lora_params:,} × 4 bytes
+= {mib(lora_weights):.1f} MiB
+
+LoRA gradients, fp32:
+= {mib(lora_gradients):.1f} MiB
+
+AdamW m + v states:
+{lora_params:,} × 8 bytes
+= {mib(optimizer_states):.1f} MiB
+
+DPO frozen reference adapter snapshot:
+≈ {mib(reference_adapter):.1f} MiB
+
+Adapter/gradient/optimizer/reference subtotal:
+≈ {mib(lora_weights + lora_gradients + optimizer_states + reference_adapter):.1f} MiB
+
+## 3. Activations
+
+DPO processes chosen and rejected together, so batch 2 becomes
+approximately 4 sequences for the concatenated forward.
+
+One fp16 hidden-state tensor at max length:
+4 × 1024 × {H} × 2 bytes
+= {mib(one_hidden):.1f} MiB
+
+Approx. checkpoint boundaries over {N_LAYERS} layers:
+{N_LAYERS} × {mib(one_hidden):.1f}
+= {mib(checkpoint_boundaries):.1f} MiB
+
+Potential attention-score transient:
+≈ {mib(attention_scores):.1f} MiB
+(actual SDPA implementation may use less)
+
+MLP gate+up transient:
+≈ {mib(mlp_gate_up):.1f} MiB
+
+## 4. Logits
+
+Conservative maximum fp16 logits tensor:
+
+4 × 1024 × {VOCAB:,} × 2 bytes
+= {gib(logits_upper):.3f} GiB
+
+TRL/Qwen can avoid retaining logits for unnecessary prompt positions,
+so actual logits memory may be lower. This is intentionally an upper bound.
+
+## 5. DPO reference pass
+
+Soup's streamed DPO path uses the same frozen base with a reference
+adapter snapshot rather than keeping a second full {base_params/1e9:.3f}B
+base model in VRAM.
+
+The reference forward is no-grad and occurs separately, so it increases
+runtime and transient forward memory but should not double policy
+activations/optimizer state at peak.
+
+## 6. Predicted peak VRAM
+
+Explicitly accounted tensors:
+≈ {gib(accounted_peak):.2f} GiB
+
+Allowing ~1.0–2.5 GiB for CUDA context, allocator fragmentation,
+temporary kernels/optimizer buffers, and unmodelled framework tensors:
+
+**Predicted peak VRAM: approximately {gib(predicted_low):.1f}–{gib(predicted_high):.1f} GiB**
+
+T4 capacity observed by Soup doctor: ~14.6 GiB.
+
+A temporary full-model load during streaming setup could increase the peak;
+that is one reason the measured peak may exceed this steady-state estimate.
+
+## What this estimate does NOT prove
+
+This is a pre-run analytical budget, not evidence that Soup actually
+streams correctly or that the model trains correctly. It will be compared
+against `soup profile`, raw `nvidia-smi`, and measured CUDA peak memory.
+"""
+
+Path("logs").mkdir(exist_ok=True)
+Path("logs/memory_budget_before.md").write_text(report, encoding="utf-8")
+
+print(report)
+print("\nSaved to: logs/memory_budget_before.md")
+
+# OUTPUT
+
+# Pre-training memory budget
+
+Timestamp: 2026-09-30 11:29:32 UTC
+
+**This estimate was recorded before `soup profile`, dry-run, or training.**
+
+## Configuration
+
+- Model: Qwen/Qwen2.5-1.5B-Instruct
+- Hidden size: 1536
+- Intermediate size: 8960
+- Layers: 28
+- Attention heads / KV heads: 12 / 2
+- Vocabulary: 151936
+- Batch size: 2
+- DPO effective chosen+rejected sequences: 4
+- max_length: 1024
+- max_prompt_length: 512
+- LoRA rank: 16
+- stream_buffers: 2
+- quantization: none
+- compute/base dtype on T4: fp16
+
+## 1. Base weights
+
+Calculated base parameters: 1,543,714,304 (1.544 B)
+
+Full resident fp16 base:
+1,543,714,304 params × 2 bytes
+= 2.875 GiB
+
+One decoder layer:
+46,797,824 params × 2 bytes
+= 89.3 MiB
+
+Two streamed layer buffers:
+2 × 89.3
+= 178.5 MiB
+
+Embeddings / non-layer resident working estimate:
+embedding = 445.1 MiB
+
+Estimated streamed base resident on GPU:
+≈ 623.6 MiB
+= 0.609 GiB
+
+The full fp16 base still needs roughly 2.875 GiB of host-side
+storage for RAM streaming, excluding framework/cache overhead.
+
+## 2. LoRA + optimizer state
+
+LoRA trainable parameters:
+18,464,768
+
+LoRA weights, fp32:
+18,464,768 × 4 bytes
+= 70.4 MiB
+
+LoRA gradients, fp32:
+= 70.4 MiB
+
+AdamW m + v states:
+18,464,768 × 8 bytes
+= 140.9 MiB
+
+DPO frozen reference adapter snapshot:
+≈ 70.4 MiB
+
+Adapter/gradient/optimizer/reference subtotal:
+≈ 352.2 MiB
+
+## 3. Activations
+
+DPO processes chosen and rejected together, so batch 2 becomes
+approximately 4 sequences for the concatenated forward.
+
+One fp16 hidden-state tensor at max length:
+4 × 1024 × 1536 × 2 bytes
+= 12.0 MiB
+
+Approx. checkpoint boundaries over 28 layers:
+28 × 12.0
+= 336.0 MiB
+
+Potential attention-score transient:
+≈ 96.0 MiB
+(actual SDPA implementation may use less)
+
+MLP gate+up transient:
+≈ 140.0 MiB
+
+## 4. Logits
+
+Conservative maximum fp16 logits tensor:
+
+4 × 1024 × 151,936 × 2 bytes
+= 1.159 GiB
+
+TRL/Qwen can avoid retaining logits for unnecessary prompt positions,
+so actual logits memory may be lower. This is intentionally an upper bound.
+
+## 5. DPO reference pass
+
+Soup's streamed DPO path uses the same frozen base with a reference
+adapter snapshot rather than keeping a second full 1.544B
+base model in VRAM.
+
+The reference forward is no-grad and occurs separately, so it increases
+runtime and transient forward memory but should not double policy
+activations/optimizer state at peak.
+
+## 6. Predicted peak VRAM
+
+Explicitly accounted tensors:
+≈ 2.67 GiB
+
+Allowing ~1.0–2.5 GiB for CUDA context, allocator fragmentation,
+temporary kernels/optimizer buffers, and unmodelled framework tensors:
+
+**Predicted peak VRAM: approximately 3.7–5.2 GiB**
+
+T4 capacity observed by Soup doctor: ~14.6 GiB.
+
+A temporary full-model load during streaming setup could increase the peak;
+that is one reason the measured peak may exceed this steady-state estimate.
+
+## What this estimate does NOT prove
+
+This is a pre-run analytical budget, not evidence that Soup actually
+streams correctly or that the model trains correctly. It will be compared
+against `soup profile`, raw `nvidia-smi`, and measured CUDA peak memory.
+
+
+Saved to: logs/memory_budget_before.md

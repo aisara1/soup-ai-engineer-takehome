@@ -1,0 +1,18 @@
+# SOURCE
+%%bash
+
+(
+  date -u
+  sha256sum \
+    verify_training.py \
+    artifacts/baseline_logps.json \
+    artifacts/control_zero_adapter.json \
+    data/eval.jsonl
+) | tee logs/verify/pretrain_sha256.txt
+
+# OUTPUT
+Wed Sep 30 01:00:27 PM UTC 2026
+f44ce1a3e7f52e280bb1f9add56c15597fe99d46bba008ec8da932a63d89b822  verify_training.py
+35678590acd756987c29ce1456097dd764cd5f937a6601d6598f4b5c0a6b456f  artifacts/baseline_logps.json
+217fb4c58bf771bf7cac9199518260c9f07b2a94799d78f095ef2fcb0193974d  artifacts/control_zero_adapter.json
+ae130e18936df26dbd9db8921f2c131bff394236cb620e7ec2c12ed834c6b4c2  data/eval.jsonl

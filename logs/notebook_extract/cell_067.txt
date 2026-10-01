@@ -1,0 +1,19 @@
+# SOURCE
+%%bash
+
+(date -u; /content/venv312/bin/python prepare_data.py) \
+  2>&1 | tee logs/data_v3_prepare.txt
+
+# OUTPUT
+Wed Sep 30 01:51:14 PM UTC 2026
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Loading dataset...
+source rows: 112052
+Traceback (most recent call last):
+  File "/content/prepare_data.py", line 287, in <module>
+    if trl_boundary_mismatch(p, c) or trl_boundary_mismatch(p, r):
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/content/prepare_data.py", line 71, in trl_boundary_mismatch
+    assert tok.eos_token is not None
+           ^^^
+NameError: name 'tok' is not defined. Did you mean: 'ntok'?

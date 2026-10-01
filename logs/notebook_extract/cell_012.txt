@@ -1,0 +1,467 @@
+# SOURCE
+"""Reproducible DPO train/eval samples from d0rj/full-hh-rlhf-ru (train split only). Seed 42.
+
+The official `test` split was found to be English:
+- median Cyrillic ratio = 0.0 over first 2000 chosen/rejected rows
+- 0% of inspected rows passed MIN_CYR >= 0.5
+
+Therefore, both train and held-out eval subsets are drawn reproducibly
+from the cleaned Russian `train` split.
+
+MAX_CHARS is a PROVISIONAL character-level heuristic, NOT a proven
+truncation threshold. Token-level truncation will be checked later
+with the selected tokenizer/model via `soup data doctor`.
+"""
+
+import json
+import re
+import hashlib
+import collections
+import numpy as np
+
+from datasets import load_dataset
+from huggingface_hub import HfApi
+
+
+# ------------------------------------------------------------
+# Configuration
+# ------------------------------------------------------------
+
+REPO = "d0rj/full-hh-rlhf-ru"
+SPLIT = "train"
+
+SEED = 42
+
+N_EVAL = 50
+N_TRAIN = 500
+
+MAX_CHARS = 3000   # provisional heuristic; prompt p99 ~3619 chars in initial inspection
+MIN_CYR = 0.5
+
+
+# ------------------------------------------------------------
+# Load exact dataset revision
+# ------------------------------------------------------------
+
+rev = HfApi().dataset_info(REPO).sha
+
+d = load_dataset(
+    REPO,
+    revision=rev,
+    split=SPLIT
+)
+
+
+# ------------------------------------------------------------
+# Helpers
+# ------------------------------------------------------------
+
+def norm(s):
+    """Normalize text for exact-equality checks."""
+    return re.sub(r"\s+", " ", s).strip().lower()
+
+
+def cyr(s):
+    """Fraction of alphabetic characters that are Cyrillic."""
+    letters = [ch for ch in s if ch.isalpha()]
+
+    if not letters:
+        return 0.0
+
+    cyrillic = sum(
+        ('а' <= ch.lower() <= 'я') or ch in 'ёЁ'
+        for ch in letters
+    )
+
+    return cyrillic / len(letters)
+
+
+def dump(rows, path):
+    """Write JSONL and return SHA256."""
+    with open(path, "w", encoding="utf-8") as fh:
+        for row in rows:
+            fh.write(json.dumps(row, ensure_ascii=False) + "\n")
+
+    with open(path, "rb") as fh:
+        return hashlib.sha256(fh.read()).hexdigest()
+
+
+def stats(rows):
+    """Basic char-level statistics for the selected sample."""
+
+    def q(values):
+        return {
+            p: int(np.percentile(values, p))
+            for p in (50, 90, 99, 100)
+        }
+
+    chosen_lengths = [len(x["chosen"]) for x in rows]
+    rejected_lengths = [len(x["rejected"]) for x in rows]
+    prompt_lengths = [len(x["prompt"]) for x in rows]
+
+    return {
+        "n": len(rows),
+        "prompt_chars": q(prompt_lengths),
+        "chosen_chars": q(chosen_lengths),
+        "rejected_chars": q(rejected_lengths),
+        "frac_chosen_longer": round(
+            float(
+                np.mean([
+                    c > r
+                    for c, r in zip(
+                        chosen_lengths,
+                        rejected_lengths
+                    )
+                ])
+            ),
+            3
+        )
+    }
+
+
+def field_set(rows, field):
+    return {norm(x[field]) for x in rows}
+
+
+# ------------------------------------------------------------
+# Filtering + reproducible split
+# ------------------------------------------------------------
+
+drops = collections.Counter()
+
+eval_rows = []
+train_rows = []
+
+seen_prompts = set()
+
+# All eval completions together.
+# This prevents train chosen/rejected from matching either
+# eval chosen OR eval rejected.
+eval_completions = set()
+
+
+for ex in d.shuffle(seed=SEED):
+
+    p = ex["prompt"]
+    c = ex["chosen"]
+    r = ex["rejected"]
+
+    # R1 — empty preference completion
+    if not c.strip() or not r.strip():
+        drops["R1_empty"] += 1
+        continue
+
+    # R2 — no preference signal
+    if c.strip() == r.strip():
+        drops["R2_identical"] += 1
+        continue
+
+    # R3 — keep primarily Russian preference pairs
+    if cyr(c) < MIN_CYR or cyr(r) < MIN_CYR:
+        drops["R3_low_cyrillic"] += 1
+        continue
+
+    # R4 — provisional protection against very long examples
+    if len(p) + max(len(c), len(r)) > MAX_CHARS:
+        drops["R4_over_max_chars_provisional"] += 1
+        continue
+
+    prompt_key = norm(p)
+
+    # R5 — exact normalized prompt duplicate
+    if prompt_key in seen_prompts:
+        drops["R5_dup_exact_prompt"] += 1
+        continue
+
+    row = {
+        "prompt": p,
+        "chosen": c,
+        "rejected": r
+    }
+
+    # First 50 eligible rows become held-out evaluation data.
+    if len(eval_rows) < N_EVAL:
+        seen_prompts.add(prompt_key)
+        eval_rows.append(row)
+
+        eval_completions.update([
+            norm(c),
+            norm(r)
+        ])
+
+        continue
+
+    # R6 — prevent completion leakage between eval and train
+    if (
+        norm(c) in eval_completions
+        or norm(r) in eval_completions
+    ):
+        drops["R6_completion_overlap_with_eval"] += 1
+        continue
+
+    seen_prompts.add(prompt_key)
+    train_rows.append(row)
+
+    if len(train_rows) == N_TRAIN:
+        break
+
+
+# ------------------------------------------------------------
+# Explicit train/eval overlap checks
+# ------------------------------------------------------------
+
+train_completions = (
+    field_set(train_rows, "chosen")
+    | field_set(train_rows, "rejected")
+)
+
+eval_completions_check = (
+    field_set(eval_rows, "chosen")
+    | field_set(eval_rows, "rejected")
+)
+
+overlap = {
+    "prompt_exact_norm": len(
+        field_set(train_rows, "prompt")
+        & field_set(eval_rows, "prompt")
+    ),
+
+    "chosen_exact_norm": len(
+        field_set(train_rows, "chosen")
+        & field_set(eval_rows, "chosen")
+    ),
+
+    "rejected_exact_norm": len(
+        field_set(train_rows, "rejected")
+        & field_set(eval_rows, "rejected")
+    ),
+
+    "any_completion_exact_norm": len(
+        train_completions
+        & eval_completions_check
+    )
+}
+
+
+# ------------------------------------------------------------
+# Additional sample diagnostics
+# ------------------------------------------------------------
+
+role_markers = collections.Counter(
+    marker
+    for x in train_rows + eval_rows
+    for marker in re.findall(
+        r"(Человек|Ассистент|Помощник|Human|Assistant)\s*:",
+        x["prompt"]
+    )
+)
+
+top_prompt_endings = collections.Counter(
+    x["prompt"].rstrip()[-20:]
+    for x in train_rows
+).most_common(5)
+
+
+# ------------------------------------------------------------
+# Save files + manifest
+# ------------------------------------------------------------
+
+manifest = {
+    "repo": REPO,
+    "revision": rev,
+    "source_split": SPLIT,
+    "seed": SEED,
+
+    "note": (
+        "Official test split was English, so both eval and train "
+        "were carved reproducibly from the cleaned Russian train split."
+    ),
+
+    "procedure": (
+        "Filter R1-R5 over train.shuffle(seed=42); "
+        "first 50 eligible rows become held-out eval; "
+        "subsequent eligible rows become train until 500, "
+        "excluding any exact completion overlap with eval via R6."
+    ),
+
+    "rules": {
+        "MAX_CHARS_provisional": MAX_CHARS,
+        "MIN_CYR": MIN_CYR,
+        "dedup_and_overlap": (
+            "Exact normalized equality using whitespace collapse + lowercase. "
+            "Near-duplicates are not removed here and are left to soup data lint."
+        )
+    },
+
+    "rows_scanned": (
+        sum(drops.values())
+        + len(eval_rows)
+        + len(train_rows)
+    ),
+
+    "drops": dict(drops),
+
+    "eval": {
+        **stats(eval_rows),
+        "sha256": dump(
+            eval_rows,
+            "data/eval.jsonl"
+        )
+    },
+
+    "train": {
+        **stats(train_rows),
+        "sha256": dump(
+            train_rows,
+            "data/train.jsonl"
+        )
+    },
+
+    "train_eval_overlap": overlap,
+
+    "role_markers_in_prompts": dict(role_markers),
+
+    "top_prompt_endings_train": top_prompt_endings
+}
+
+
+with open(
+    "data/manifest.json",
+    "w",
+    encoding="utf-8"
+) as fh:
+    json.dump(
+        manifest,
+        fh,
+        ensure_ascii=False,
+        indent=2
+    )
+
+
+print(
+    json.dumps(
+        manifest,
+        ensure_ascii=False,
+        indent=2
+    )
+)
+
+
+# ------------------------------------------------------------
+# Hard checks
+# ------------------------------------------------------------
+
+assert len(eval_rows) == N_EVAL, (
+    f"Expected {N_EVAL} eval rows, got {len(eval_rows)}"
+)
+
+assert len(train_rows) == N_TRAIN, (
+    f"Expected {N_TRAIN} train rows, got {len(train_rows)}"
+)
+
+assert all(v == 0 for v in overlap.values()), (
+    f"Train/eval overlap detected: {overlap}"
+)
+
+# OUTPUT
+{
+  "repo": "d0rj/full-hh-rlhf-ru",
+  "revision": "fd4a069df1b99329527389101f48540140478ff7",
+  "source_split": "train",
+  "seed": 42,
+  "note": "Official test split was English, so both eval and train were carved reproducibly from the cleaned Russian train split.",
+  "procedure": "Filter R1-R5 over train.shuffle(seed=42); first 50 eligible rows become held-out eval; subsequent eligible rows become train until 500, excluding any exact completion overlap with eval via R6.",
+  "rules": {
+    "MAX_CHARS_provisional": 3000,
+    "MIN_CYR": 0.5,
+    "dedup_and_overlap": "Exact normalized equality using whitespace collapse + lowercase. Near-duplicates are not removed here and are left to soup data lint."
+  },
+  "rows_scanned": 880,
+  "drops": {
+    "R3_low_cyrillic": 284,
+    "R4_over_max_chars_provisional": 37,
+    "R6_completion_overlap_with_eval": 4,
+    "R2_identical": 5
+  },
+  "eval": {
+    "n": 50,
+    "prompt_chars": {
+      "50": 486,
+      "90": 1414,
+      "99": 1896,
+      "100": 1902
+    },
+    "chosen_chars": {
+      "50": 275,
+      "90": 910,
+      "99": 1264,
+      "100": 1295
+    },
+    "rejected_chars": {
+      "50": 262,
+      "90": 816,
+      "99": 1858,
+      "100": 2235
+    },
+    "frac_chosen_longer": 0.64,
+    "sha256": "9030d5b48edf6e56519ab95758730d88f2e2be17c63161a5dac44d086faac753"
+  },
+  "train": {
+    "n": 500,
+    "prompt_chars": {
+      "50": 442,
+      "90": 1452,
+      "99": 2351,
+      "100": 2680
+    },
+    "chosen_chars": {
+      "50": 304,
+      "90": 798,
+      "99": 1291,
+      "100": 1532
+    },
+    "rejected_chars": {
+      "50": 259,
+      "90": 778,
+      "99": 1297,
+      "100": 1425
+    },
+    "frac_chosen_longer": 0.548,
+    "sha256": "ee850055e6724e1f50d06aeac628ff16a55a3b0ef27c9ee610cb232dc9b106ac"
+  },
+  "train_eval_overlap": {
+    "prompt_exact_norm": 0,
+    "chosen_exact_norm": 0,
+    "rejected_exact_norm": 0,
+    "any_completion_exact_norm": 0
+  },
+  "role_markers_in_prompts": {
+    "Человек": 1216,
+    "Ассистент": 877,
+    "Помощник": 342,
+    "Human": 4,
+    "Assistant": 1
+  },
+  "top_prompt_endings_train": [
+    [
+      "Спасибо!\n\nАссистент:",
+      4
+    ],
+    [
+      ", верно?\n\nАссистент:",
+      4
+    ],
+    [
+      " Спасибо\n\nАссистент:",
+      3
+    ],
+    [
+      "е совет?\n\nАссистент:",
+      2
+    ],
+    [
+      "олледже?\n\nАссистент:",
+      2
+    ]
+  ]
+}

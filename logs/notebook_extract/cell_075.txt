@@ -1,0 +1,37 @@
+# SOURCE
+%%bash
+set -e
+
+echo "=== BEFORE ==="
+ls -ld output/dpo_qwen15b_stream 2>/dev/null || true
+
+if [ -d output/dpo_qwen15b_stream ]; then
+    if [ -e output/run1_pre_R9 ]; then
+        echo "ERROR: output/run1_pre_R9 already exists — refusing to overwrite it."
+        exit 1
+    fi
+
+    mv output/dpo_qwen15b_stream output/run1_pre_R9
+    echo "Moved old adapter -> output/run1_pre_R9"
+else
+    echo "No previous output directory found."
+fi
+
+echo
+echo "=== AFTER ==="
+ls -ld output/run1_pre_R9 2>/dev/null || true
+ls -ld output/dpo_qwen15b_stream 2>/dev/null || echo "final output path is clean"
+
+echo
+echo "OUTPUT ARCHIVE PASS"
+
+# OUTPUT
+=== BEFORE ===
+drwxr-xr-x 4 root root 4096 Sep 30 13:30 output/dpo_qwen15b_stream
+Moved old adapter -> output/run1_pre_R9
+
+=== AFTER ===
+drwxr-xr-x 4 root root 4096 Sep 30 13:30 output/run1_pre_R9
+final output path is clean
+
+OUTPUT ARCHIVE PASS

@@ -1,0 +1,165 @@
+# SOURCE
+!mkdir -p logs/data_v2
+!(date -u; which python; python prepare_data.py) 2>&1 | tee logs/data_v2/prepare_data_v2.log
+
+# OUTPUT
+Wed Sep 30 12:32:25 PM UTC 2026
+/content/venv312/bin/python
+Loading dataset...
+source rows: 112052
+{
+  "repo": "d0rj/full-hh-rlhf-ru",
+  "revision": "fd4a069df1b99329527389101f48540140478ff7",
+  "source_split": "train",
+  "seed": 42,
+  "rows_scanned": 970,
+  "drops": {
+    "R1_empty": 1,
+    "R2_identical": 6,
+    "R3_low_cyrillic": 319,
+    "R4_over_3000_chars": 37,
+    "R5_dup_exact_prompt": 0,
+    "R6_completion_overlap_with_eval": 4,
+    "R7_prompt_over_500_tok": 53,
+    "R8_total_over_1000_tok": 0
+  },
+  "drop_counter_scope": "Drop counts apply only to rows scanned until 50 eval + 500 train rows were collected; they are not full-dataset prevalence estimates.",
+  "selection": {
+    "eval": "first 50 eligible rows after deterministic shuffle",
+    "train": "next 500 eligible rows after deterministic shuffle; train completions are excluded if they exactly overlap eval completions"
+  },
+  "filters": {
+    "MAX_CHARS": 3000,
+    "MIN_CYR": 0.5
+  },
+  "tokenizer": {
+    "id": "Qwen/Qwen2.5-1.5B-Instruct",
+    "revision": "989aa7980e4cf806f80c7fef2b1adb7bc71aa306",
+    "transformers": "5.17.0",
+    "tokenizers": "0.23.2",
+    "rendering": "raw text; experimentally verified with TRL 0.29.1: is_conversational=False and chat template not applied",
+    "rules": {
+      "PROMPT_TOK_MAX": 500,
+      "TOTAL_TOK_MAX": 1000,
+      "EOS_BUDGET": 1,
+      "add_special_tokens": false
+    }
+  },
+  "eval": {
+    "n": 50,
+    "sha256": "ae130e18936df26dbd9db8921f2c131bff394236cb620e7ec2c12ed834c6b4c2",
+    "char_stats": {
+      "prompt": {
+        "p50": 398,
+        "p90": 1258,
+        "p99": 1502,
+        "max": 1517
+      },
+      "chosen": {
+        "p50": 272,
+        "p90": 910,
+        "p99": 1264,
+        "max": 1295
+      },
+      "rejected": {
+        "p50": 288,
+        "p90": 945,
+        "p99": 1858,
+        "max": 2235
+      },
+      "frac_chosen_longer": 0.6
+    }
+  },
+  "train": {
+    "n": 500,
+    "sha256": "53dee71a59fed7a8103c59fc6e6cfb58d9016c6a74d7b89e5a74710490477027",
+    "char_stats": {
+      "prompt": {
+        "p50": 377,
+        "p90": 1141,
+        "p99": 1474,
+        "max": 1687
+      },
+      "chosen": {
+        "p50": 299,
+        "p90": 804,
+        "p99": 1291,
+        "max": 1532
+      },
+      "rejected": {
+        "p50": 253,
+        "p90": 778,
+        "p99": 1297,
+        "max": 1438
+      },
+      "frac_chosen_longer": 0.56
+    }
+  },
+  "token_stats": {
+    "train": {
+      "prompt_tok": {
+        "50": 130,
+        "90": 385,
+        "99": 476,
+        "100": 495
+      },
+      "total_tok_incl_eos": {
+        "50": 296,
+        "90": 548,
+        "99": 762,
+        "100": 925
+      }
+    },
+    "eval": {
+      "prompt_tok": {
+        "50": 122,
+        "90": 401,
+        "99": 451,
+        "100": 457
+      },
+      "total_tok_incl_eos": {
+        "50": 291,
+        "90": 645,
+        "99": 831,
+        "100": 872
+      }
+    }
+  },
+  "train_eval_overlap": {
+    "prompt": 0,
+    "chosen": 0,
+    "rejected": 0,
+    "any_completion": 0
+  },
+  "prompts_ending_with_assistant_marker": {
+    "train": 500,
+    "eval": 50
+  },
+  "top_prompt_endings": {
+    "train": [
+      [
+        "Ассистент:",
+        500
+      ]
+    ],
+    "eval": [
+      [
+        "Ассистент:",
+        50
+      ]
+    ]
+  },
+  "role_marker_counts_combined": {
+    "Человек": 1132,
+    "Ассистент": 839,
+    "Помощник": 291,
+    "Human": 4,
+    "Assistant": 0
+  },
+  "superseded_note": "v1 sample without token rules is preserved in data/superseded_v1/. Initial audit found 41/500 train prompts above Soup's 512-token prompt cap; Soup 0.75.1 fallback uses keep_start, so those prompts were at risk of tail truncation. v2 adds conservative 500/1000 token filters before training."
+}
+
+WROTE:
+data/train.jsonl
+data/eval.jsonl
+data/manifest.json

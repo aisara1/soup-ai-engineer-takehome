@@ -1,0 +1,12 @@
+# SOURCE
+!mkdir -p data/superseded_v1 && \
+cp -v data/train.jsonl data/eval.jsonl data/manifest.json data/superseded_v1/ && \
+sha256sum data/superseded_v1/* | tee data/superseded_v1/SHA256SUMS.txt
+
+# OUTPUT
+'data/train.jsonl' -> 'data/superseded_v1/train.jsonl'
+'data/eval.jsonl' -> 'data/superseded_v1/eval.jsonl'
+'data/manifest.json' -> 'data/superseded_v1/manifest.json'
+9030d5b48edf6e56519ab95758730d88f2e2be17c63161a5dac44d086faac753  data/superseded_v1/eval.jsonl
+91506b4e2beff0c4d7171deb93594ffe7084c9812ebf8456b20062ae384fe95a  data/superseded_v1/manifest.json
+ee850055e6724e1f50d06aeac628ff16a55a3b0ef27c9ee610cb232dc9b106ac  data/superseded_v1/train.jsonl

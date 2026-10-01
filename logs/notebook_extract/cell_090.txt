@@ -1,0 +1,76 @@
+# SOURCE
+!/content/venv312/bin/soup ship --help
+
+# OUTPUT
+                                                                                
+ Usage: soup ship [OPTIONS] [COMMAND] [ARGS]...                                 
+                                                                                
+ SHIP / DON'T SHIP verdict after fine-tuning: task win AND no catastrophic      
+ forgetting, fused into one decision (v0.71.25).                                
+                                                                                
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ --base                          TEXT     Base model id/path (the 'before').  │
+│ --tuned                         TEXT     Tuned model id/path (a separate     │
+│                                          'after' model).                     │
+│ --adapter                       TEXT     LoRA adapter path (tuned = base +   │
+│                                          this adapter).                      │
+│ --task-eval                     TEXT     JSONL of leg-1 task-win eval tasks. │
+│ --task-mode                     TEXT     Leg-1 mode: metric | judge_score |  │
+│                                          pairwise (judge win-rate).          │
+│                                          [default: metric]                   │
+│ --noise-floor                   INTEGER  Re-run the BASE model N times       │
+│                                          (2-10) to measure what this         │
+│                                          instrument can resolve, print it    │
+│                                          beside the verdict, and refuse to   │
+│                                          call any delta smaller than the     │
+│                                          measured floor significant. Costs N │
+│                                          extra base passes. The leg-1 task   │
+│                                          floor is measured in every          │
+│                                          --task-mode; in judge_score /       │
+│                                          pairwise each repeat is N extra     │
+│                                          JUDGE passes (N x the judge API     │
+│                                          calls), and the floor is labelled   │
+│                                          decode + judge.                     │
+│ --judge-model                   TEXT     Judge model URL for --task-mode     │
+│                                          judge_score or pairwise.            │
+│ --general-suite                 TEXT     Comma list of leg-2 benchmarks      │
+│                                          (default: the bundled offline suite │
+│                                          — MCQ/arithmetic +                  │
+│                                          tool-call/JSON/safety; non-bundled  │
+│                                          names route through lm-eval).       │
+│ --baseline                      TEXT     registry://<id> or stamped JSON of  │
+│                                          base leg-2 scores (skips base run). │
+│                                          Unstamped or                        │
+│                                          scorer_revision-mismatched          │
+│                                          baselines warn once — re-measure so │
+│                                          both sides share one scorer scale   │
+│                                          (#404).                             │
+│ --forgetting-threshold          FLOAT    Max allowed leg-2 drop in absolute  │
+│                                          points before DON'T SHIP.           │
+│                                          [default: 0.05]                     │
+│ --evidence                      TEXT     JSON of pre-computed scores         │
+│                                          (offline, no model load).           │
+│ --output                -o      TEXT     Write the verdict JSON to this      │
+│                                          path.                               │
+│ --emit-evidence                 TEXT     Write the scores in the --evidence  │
+│                                          INPUT schema so this run can be     │
+│                                          replayed offline (output-is-input). │
+│                                          With --config it also STAMPS the    │
+│                                          config's provenance onto the        │
+│                                          emitted evidence.                   │
+│ --config                        TEXT     soup.yaml whose eval.ship block     │
+│                                          supplies defaults (CLI flags win).  │
+│                                          With --evidence alone it GATES      │
+│                                          (refuses evidence whose config_sha  │
+│                                          drifted from this config); with     │
+│                                          --emit-evidence it STAMPS this      │
+│                                          config's provenance.                │
+│ --push                          TEXT     Post the verdict as a GitHub PR     │
+│                                          comment (owner/repo#N). Auth via    │
+│                                          GITHUB_TOKEN / GH_TOKEN; needs the  │
+│                                          `gh` CLI.                           │
+│ --device                        TEXT     Device for the live run (cuda /     │
+│                                          cpu).                               │
+│ --help                                   Show this message and exit.         │
+╰──────────────────────────────────────────────────────────────────────────────╯
+

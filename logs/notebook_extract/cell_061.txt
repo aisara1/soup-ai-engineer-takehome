@@ -1,0 +1,50 @@
+# SOURCE
+%%bash
+set -e
+
+cp soup.yaml soup_before_local_base.yaml
+
+python - <<'PY'
+from pathlib import Path
+
+p = Path("soup.yaml")
+text = p.read_text()
+
+old = "base: Qwen/Qwen2.5-1.5B-Instruct"
+new = "base: /content/models/qwen2.5-1.5b-pinned"
+
+assert old in text, "Original base line not found"
+text = text.replace(old, new, 1)
+p.write_text(text)
+
+print("UPDATED:")
+for line in text.splitlines():
+    if line.startswith("base:"):
+        print(line)
+PY
+
+echo
+echo "=== DIFF ==="
+diff -u soup_before_local_base.yaml soup.yaml || true
+
+echo
+echo "=== NEW CONFIG HASH ==="
+sha256sum soup.yaml
+
+# OUTPUT
+UPDATED:
+base: /content/models/qwen2.5-1.5b-pinned
+
+=== DIFF ===
+--- soup_before_local_base.yaml	2026-09-30 13:16:01.493737758 +0000
++++ soup.yaml	2026-09-30 13:16:01.533741753 +0000
+@@ -1,5 +1,5 @@
+ 
+-base: Qwen/Qwen2.5-1.5B-Instruct
++base: /content/models/qwen2.5-1.5b-pinned
+ task: dpo
+ backend: transformers
+ 
+
+=== NEW CONFIG HASH ===
+82ea3a7ca287bb51272f667aa1d2cdb84ccd6bdbff96d1bf8e1390da447767e3  soup.yaml

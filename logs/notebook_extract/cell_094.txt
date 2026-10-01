@@ -1,0 +1,6 @@
+# SOURCE
+from google.colab import drive
+drive.mount('/content/drive')
+
+# OUTPUT
+Mounted at /content/drive

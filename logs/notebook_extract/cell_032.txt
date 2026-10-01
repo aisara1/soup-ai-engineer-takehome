@@ -1,0 +1,233 @@
+# SOURCE
+!mkdir -p logs/preflight_py312
+!(date -u; python check_config_keys.py soup.yaml) 2>&1 | tee logs/preflight_py312/config_keys.txt
+!(date -u; soup doctor --disk; free -h; df -h ~ .) 2>&1 | tee logs/preflight_py312/system_doctor.txt
+!for f in train eval; do \
+  (date -u; soup data validate data/$f.jsonl --format dpo) 2>&1 | tee logs/preflight_py312/validate_$f.txt; \
+  (date -u; soup data lint data/$f.jsonl --format dpo -o logs/preflight_py312/lint_$f.json) 2>&1 | tee logs/preflight_py312/lint_$f.txt; \
+done
+
+# OUTPUT
+Wed Sep 30 11:11:23 AM UTC 2026
+schema file: /content/venv312/lib/python3.12/site-packages/soup_cli/config/schema.py
+root model: SoupConfig
+ok       base
+ok       task
+ok       backend
+ok       data
+ok       data.train
+ok       data.format
+ok       data.max_length
+ok       data.val_split
+ok       training
+ok       training.epochs
+ok       training.lr
+ok       training.batch_size
+ok       training.gradient_accumulation_steps
+ok       training.quantization
+ok       training.gradient_checkpointing
+ok       training.stream_layers
+ok       training.stream_source
+ok       training.stream_buffers
+ok       training.dpo_beta
+ok       training.seed
+ok       training.lora
+ok       training.lora.r
+ok       training.lora.alpha
+ok       training.lora.dropout
+ok       training.lora.target_modules
+ok       output
+
+--- data (DataConfig) relevant fields: name | default ---
+  val_split | 0.1
+  raft_shuffle_seed | None
+  replay_seed | None
+  streaming | False
+  eval_on_each_dataset | False
+
+--- training (TrainingConfig) relevant fields: name | default ---
+  seed | None
+  data_seed | None
+  warmup_ratio | 0.03
+  scheduler | 'cosine'
+  save_steps | 100
+  logging_steps | 10
+  dpo_beta | 0.1
+  kto_beta | 0.1
+  orpo_beta | 0.1
+  bco_beta | 0.1
+  preference_loss | None
+  dpo_beta_schedule | None
+  dpo_beta_end | None
+  dpo_ref_regen_epochs | None
+  preference_loss_weights | None
+  grpo_beta | 0.1
+  online_dpo_loss_type | 'sigmoid'
+  grpo_fp16 | False
+  ref_model_ema_alpha | None
+  async_grpo_prefetch | False
+  quantize_ref_model | False
+  rl_checkpoint_save_every_steps | None
+  rl_checkpoint_include_ref_model | False
+  reward_hack_beta_floor | 0.02
+  reward_hack_beta_ceil | 1.0
+  reward_hack_signal_target | 0.15
+  yarn_beta_fast | None
+  yarn_beta_slow | None
+  relora_warmup_ratio | 0.1
+  warmup_auto | False
+  auto_mixed_precision | False
+  lisa_interval_steps | 20
+  stream_layers | False
+  stream_source | 'auto'
+  stream_ngram_source | 'auto'
+  stream_buffers | 2
+  stream_pin | None
+  stream_vram_override | None
+  stream_vram_probe | False
+  stream_disk_kind | None
+  forgetting_eval_steps | 100
+  checkpoint_eval_steps | 200
+  checkpoint_eval_metric | 'composite'
+  checkpoint_eval_tasks | None
+  eval_gate | None
+--- training.lora (LoraConfig) all fields ---
+  r | 64
+  alpha | 16
+  dropout | 0.05
+  target_modules | 'auto'
+  target_parameters | None
+  use_dora | False
+  use_rslora | False
+  use_vera | False
+  use_olora | False
+  rank_pattern | None
+  alpha_pattern | None
+  init_strategy | 'random'
+  loftq_iter | 1
+  loftq_bits | 4
+
+UNKNOWN KEYS: none
+Wed Sep 30 11:11:24 AM UTC 2026
+Soup Doctor - checking your environment...
+
+╭─────────────────────────────────── System ───────────────────────────────────╮
+│ Python:   3.12.3                                                             │
+│ Platform: Linux 6.6.122+                                                     │
+│ Arch:     x86_64                                                             │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭──────────────────────────────────── GPU ─────────────────────────────────────╮
+│ CUDA:     available (v13.0)                                                  │
+│ GPUs:     1                                                                  │
+│   GPU 0: Tesla T4 (14.6 GB)                                                  │
+╰──────────────────────────────────────────────────────────────────────────────╯
+                             System Resources                              
+┏━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ Resource  ┃ Value                                                       ┃
+┡━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│ RAM       │ 13 GB                                                       │
+│ Disk      │ 59 GB free                                                  │
+│ Disk type │ SATA SSD — layer streaming refuses the disk tier (RAM only) │
+└───────────┴─────────────────────────────────────────────────────────────┘
+
+                              Dependencies                              
+┏━━━━━━━━━━━━━━┳━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┓
+┃ Package      ┃ Required ┃  Installed   ┃ Min Version ┃ Status        ┃
+┡━━━━━━━━━━━━━━╇━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━┩
+│ pydantic     │   yes    │    2.13.5    │ >=2.0.0     │ OK            │
+│ typer        │   yes    │    0.20.1    │ >=0.9.0     │ OK            │
+│ rich         │   yes    │    15.0.0    │ >=13.0.0    │ OK            │
+│ pyyaml       │   yes    │    6.0.3     │ >=6.0       │ OK            │
+│ plotext      │   yes    │    6.1.0     │ >=5.2.0     │ OK            │
+│ fastapi      │ optional │      -       │ >=0.104.0   │ not installed │
+│ uvicorn      │ optional │      -       │ >=0.24.0    │ not installed │
+│ datasketch   │ optional │    2.0.0     │ >=1.6.0     │ OK            │
+│ lm-eval      │ optional │      -       │ >=0.4.0     │ not installed │
+│ wandb        │ optional │      -       │ >=0.15.0    │ not installed │
+│ deepspeed    │ optional │      -       │ >=0.12.0    │ not installed │
+│ httpx        │ optional │    0.28.1    │ >=0.24.0    │ OK            │
+│ unsloth      │ optional │      -       │ >=2024.8    │ not installed │
+│ Pillow       │ optional │      -       │ >=9.0.0     │ not installed │
+│ torchao      │ optional │      -       │ >=0.4.0     │ not installed │
+│ sglang       │ optional │      -       │ >=0.2.0     │ not installed │
+│ librosa      │ optional │      -       │ >=0.10.0    │ not installed │
+│ torch        │ [train]  │ 2.14.0+cu130 │ >=2.6.0     │ OK            │
+│ transformers │ [train]  │    5.17.0    │ >=5.16.1    │ OK            │
+│ peft         │ [train]  │    0.21.1    │ >=0.20.0    │ OK            │
+│ trl          │ [train]  │    0.29.1    │ >=0.29.0    │ OK            │
+│ datasets     │ [train]  │    5.0.1     │ >=2.14.0    │ OK            │
+│ bitsandbytes │ [train]  │    0.50.2    │ >=0.41.0    │ OK            │
+│ accelerate   │ [train]  │    1.15.0    │ >=0.27.0    │ OK            │
+└──────────────┴──────────┴──────────────┴─────────────┴───────────────┘
+
+All checks passed! Your environment is ready.
+
+GitHub: https://github.com/MakazhanAlpamys/Soup
+               total        used        free      shared  buff/cache   available
+Mem:            12Gi       1.9Gi       952Mi       3.8Mi        10Gi        10Gi
+Swap:             0B          0B          0B
+Filesystem      Size  Used Avail Use% Mounted on
+overlay         113G   54G   59G  48% /
+overlay         113G   54G   59G  48% /
+Wed Sep 30 11:11:37 AM UTC 2026
+Dataset is valid!
+
+500/500 rows valid for dpo format
+Wed Sep 30 11:11:38 AM UTC 2026
+                              soup data lint (dpo)                              
+┏━━━━━━━━━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ Check           ┃ Verdict ┃ Message                ┃ Evidence                ┃
+┡━━━━━━━━━━━━━━━━━╇━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│ length_bias     │ OK      │ effect size (Cohen's   │ mean chosen=54.9, mean  │
+│                 │         │ d) = 0.103 (chosen     │ rejected=50.6           │
+│                 │         │ longer than rejected); │                         │
+│                 │         │ chosen is longer in    │                         │
+│                 │         │ 53.2% of rows          │                         │
+│ identical_pairs │ OK      │ 0/500 rows (0.0%) have │                         │
+│                 │         │ chosen == rejected     │                         │
+│                 │         │ (zero preference       │                         │
+│                 │         │ signal)                │                         │
+│ near_duplicates │ OK      │ 0/500 rows (0.0%) have │ threshold=0.85          │
+│                 │         │ a near-duplicate       │                         │
+│                 │         │ elsewhere in the       │                         │
+│                 │         │ dataset                │                         │
+│ prompt_leak     │ OK      │ 0/500 rows (0.0%) have │ min_prompt_len=40       │
+│                 │         │ the prompt echoed      │                         │
+│                 │         │ verbatim inside the    │                         │
+│                 │         │ completion             │                         │
+└─────────────────┴─────────┴────────────────────────┴─────────────────────────┘
+╭───────── overall ─────────╮
+│ OK — 500/500 rows scanned │
+╰───────────────────────────╯
+Wrote logs/preflight_py312/lint_train.json
+Wed Sep 30 11:11:40 AM UTC 2026
+Dataset is valid!
+
+50/50 rows valid for dpo format
+Wed Sep 30 11:11:41 AM UTC 2026
+                              soup data lint (dpo)                              
+┏━━━━━━━━━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ Check           ┃ Verdict ┃ Message                ┃ Evidence                ┃
+┡━━━━━━━━━━━━━━━━━╇━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│ length_bias     │ OK      │ effect size (Cohen's   │ mean chosen=60.2, mean  │
+│                 │         │ d) = 0.095 (chosen     │ rejected=55.1           │
+│                 │         │ longer than rejected); │                         │
+│                 │         │ chosen is longer in    │                         │
+│                 │         │ 60.0% of rows          │                         │
+│ identical_pairs │ OK      │ 0/50 rows (0.0%) have  │                         │
+│                 │         │ chosen == rejected     │                         │
+│                 │         │ (zero preference       │                         │
+│                 │         │ signal)                │                         │
+│ near_duplicates │ OK      │ 0/50 rows (0.0%) have  │ threshold=0.85          │
+│                 │         │ a near-duplicate       │                         │
+│                 │         │ elsewhere in the       │                         │
+│                 │         │ dataset                │                         │
+│ prompt_leak     │ OK      │ 0/50 rows (0.0%) have  │ min_prompt_len=40       │
+│                 │         │ the prompt echoed      │                         │
+│                 │         │ verbatim inside the    │                         │
+│                 │         │ completion             │                         │
+└─────────────────┴─────────┴────────────────────────┴─────────────────────────┘
+╭──────── overall ────────╮
+│ OK — 50/50 rows scanned │
+╰─────────────────────────╯
+Wrote logs/preflight_py312/lint_eval.json

@@ -1,0 +1,103 @@
+# SOURCE
+%%bash
+set -o pipefail
+
+mkdir -p logs/train
+
+# Зафиксировать точные входы ДО training
+(
+  date -u
+  sha256sum soup.yaml data/train.jsonl data/eval.jsonl verify_training.py
+) | tee logs/train/pretrain_inputs_sha256.txt
+
+# GPU непосредственно перед запуском
+(date -u; nvidia-smi) \
+  2>&1 | tee logs/train/nvidia_smi_before.txt
+
+# Каждую секунду пишем использование VRAM/GPU
+nvidia-smi \
+  --query-gpu=timestamp,name,memory.used,memory.total,utilization.gpu \
+  --format=csv \
+  -l 1 \
+  > logs/train/nvidia_smi_sampling.csv 2>&1 &
+
+MONITOR_PID=$!
+
+echo "=== TRAIN START $(date -u) ===" | tee logs/train/train.log
+
+/content/venv312/bin/soup --log-level verbose train -c soup.yaml \
+  2>&1 | tee -a logs/train/train.log
+
+TRAIN_EXIT=${PIPESTATUS[0]}
+
+echo "=== TRAIN END $(date -u) | exit=$TRAIN_EXIT ===" \
+  | tee -a logs/train/train.log
+
+kill "$MONITOR_PID" 2>/dev/null || true
+wait "$MONITOR_PID" 2>/dev/null || true
+
+(date -u; nvidia-smi) \
+  2>&1 | tee logs/train/nvidia_smi_after.txt
+
+exit "$TRAIN_EXIT"
+
+# OUTPUT
+Wed Sep 30 01:01:56 PM UTC 2026
+a005fad666718f445f1cea8b3bc812d8f14b9b9c5e255c45df76331217add576  soup.yaml
+53dee71a59fed7a8103c59fc6e6cfb58d9016c6a74d7b89e5a74710490477027  data/train.jsonl
+ae130e18936df26dbd9db8921f2c131bff394236cb620e7ec2c12ed834c6b4c2  data/eval.jsonl
+f44ce1a3e7f52e280bb1f9add56c15597fe99d46bba008ec8da932a63d89b822  verify_training.py
+Wed Sep 30 01:01:56 PM UTC 2026
+Wed Sep 30 13:01:56 2026       
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 580.82.07              Driver Version: 580.82.07      CUDA Version: 13.0     |
++-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  Tesla T4                       Off |   00000000:00:04.0 Off |                    0 |
+| N/A   36C    P8             11W /   70W |       0MiB /  15360MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|  No running processes found                                                             |
++-----------------------------------------------------------------------------------------+
+=== TRAIN START Wed Sep 30 01:01:56 PM UTC 2026 ===
+Loading config from soup.yaml...
+╭─────────────────────────────── Training Setup ───────────────────────────────╮
+│ Device:  Tesla T4                                                            │
+│ Memory:  14.6 GB                                                             │
+│ Model:   Qwen/Qwen2.5-1.5B-Instruct                                          │
+│ Task:    dpo                                                                 │
+│ Backend: transformers                                                        │
+│ LoRA:    r=16, alpha=32                                                      │
+│ Quant:   none                                                                │
+│ Seed:    42                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────╯
+Start training? [Y/n]: Loading dataset...
+Loaded: 500 train samples
+Run ID: run_20260930_130159_f135247a
+Setting up model + trainer...
+Loading tokenizer: Qwen/Qwen2.5-1.5B-Instruct
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Fetching 6 files:   0%|          | 0/6 [00:00<?, ?it/s]Fetching 6 files: 100%|██████████| 6/6 [00:00<00:00, 1215.74it/s]
+╭────────────────────── Layer streaming disk pre-flight ───────────────────────╮
+│ HF/local source: 3.09 GB                                                     │
+│ Soup materialized copy: 3.09 GB (write required)                             │
+│ Layer-shard cache: 3.09 GB (write required)                                  │
+│ Projected total on disk: 9.26 GB                                             │
+│ Additional writes before training: 6.17 GB                                   │
+│ Free on target volume (materialized weight copy + layer-shard cache): 59.88  │
+│ GB                                                                           │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+Error: ValueError: cached snapshot file 'model.safetensors' points outside the 
+Hugging Face blob store
+Run with --verbose for the full traceback.
+ERROR: CalledProcessError: Command 'b'set -o pipefail\n\nmkdir -p logs/train\n\n# \xd0\x97\xd0\xb0\xd1\x84\xd0\xb8\xd0\xba\xd1\x81\xd0\xb8\xd1\x80\xd0\xbe\xd0\xb2\xd0\xb0\xd1\x82\xd1\x8c \xd1\x82\xd0\xbe\xd1\x87\xd0\xbd\xd1\x8b\xd0\xb5 \xd0\xb2\xd1\x85\xd0\xbe\xd0\xb4\xd1\x8b \xd0\x94\xd0\x9e training\n(\n  date -u\n  sha256sum soup.yaml data/train.jsonl data/eval.jsonl verify_training.py\n) | tee logs/train/pretrain_inputs_sha256.txt\n\n# GPU \xd0\xbd\xd0\xb5\xd0\xbf\xd0\xbe\xd1\x81\xd1\x80\xd0\xb5\xd0\xb4\xd1\x81\xd1\x8

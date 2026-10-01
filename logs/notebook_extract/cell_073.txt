@@ -1,0 +1,83 @@
+# SOURCE
+%%bash
+set -e
+
+echo "=== FILE HASHES ==="
+sha256sum data/train.jsonl data/eval.jsonl soup.yaml
+
+echo
+echo "=== ROW COUNTS ==="
+/content/venv312/bin/python - <<'PY'
+import json
+train = [json.loads(x) for x in open("data/train.jsonl")]
+ev = [json.loads(x) for x in open("data/eval.jsonl")]
+print("train:", len(train))
+print("eval :", len(ev))
+assert len(train) == 500
+assert len(ev) == 50
+PY
+
+echo
+echo "=== SOUP VALIDATE ==="
+/content/venv312/bin/soup data validate data/train.jsonl --format dpo
+
+echo
+echo "=== SOUP LINT ==="
+/content/venv312/bin/soup data lint data/train.jsonl --format dpo
+
+echo
+echo "=== CONFIG DRY RUN ==="
+/content/venv312/bin/soup train soup.yaml --dry-run
+
+echo
+echo "FINAL PREFLIGHT PASS"
+
+# OUTPUT
+=== FILE HASHES ===
+175f3ad1ae66034c557f7d54efe30121c6e5b7e99169127539dacb2207e3df67  data/train.jsonl
+ae130e18936df26dbd9db8921f2c131bff394236cb620e7ec2c12ed834c6b4c2  data/eval.jsonl
+82ea3a7ca287bb51272f667aa1d2cdb84ccd6bdbff96d1bf8e1390da447767e3  soup.yaml
+
+=== ROW COUNTS ===
+train: 500
+eval : 50
+
+=== SOUP VALIDATE ===
+Dataset is valid!
+
+500/500 rows valid for dpo format
+
+=== SOUP LINT ===
+                              soup data lint (dpo)                              
+┏━━━━━━━━━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ Check           ┃ Verdict ┃ Message                ┃ Evidence                ┃
+┡━━━━━━━━━━━━━━━━━╇━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│ length_bias     │ OK      │ effect size (Cohen's   │ mean chosen=54.4, mean  │
+│                 │         │ d) = 0.106 (chosen     │ rejected=49.9           │
+│                 │         │ longer than rejected); │                         │
+│                 │         │ chosen is longer in    │                         │
+│                 │         │ 53.8% of rows          │                         │
+│ identical_pairs │ OK      │ 0/500 rows (0.0%) have │                         │
+│                 │         │ chosen == rejected     │                         │
+│                 │         │ (zero preference       │                         │
+│                 │         │ signal)                │                         │
+│ near_duplicates │ OK      │ 0/500 rows (0.0%) have │ threshold=0.85          │
+│                 │         │ a near-duplicate       │                         │
+│                 │         │ elsewhere in the       │                         │
+│                 │         │ dataset                │                         │
+│ prompt_leak     │ OK      │ 0/500 rows (0.0%) have │ min_prompt_len=40       │
+│                 │         │ the prompt echoed      │                         │
+│                 │         │ verbatim inside the    │                         │
+│                 │         │ completion             │                         │
+└─────────────────┴─────────┴────────────────────────┴─────────────────────────┘
+╭───────── overall ─────────╮
+│ OK — 500/500 rows scanned │
+╰───────────────────────────╯
+
+=== CONFIG DRY RUN ===
+Usage: soup train [OPTIONS]
+Try 'soup train --help' for help.
+╭─ Error ──────────────────────────────────────────────────────────────────────╮
+│ Got unexpected extra argument (soup.yaml)                                    │
+╰──────────────────────────────────────────────────────────────────────────────╯
+ERROR: CalledProcessError: Command 'b'set -e\n\necho "=== FILE HASHES ==="\nsha256sum data/train.jsonl data/eval.jsonl soup.yaml\n\necho\necho "=== ROW COUNTS ==="\n/content/venv312/bin/python - <<\'PY\'\nimport json\ntrain = [json.loads(x) for x in open("data/train.jsonl")]\nev = [json.loads(x) for x in open("data/eval.jsonl")]\nprint("train:", len(train))\nprint("eval :", len(ev))\nassert len(train) == 500\nassert len(ev) == 50\nPY\n\necho\necho "=== SOUP VALIDATE ==="\n/content/venv312/bin/soup data validate data/train

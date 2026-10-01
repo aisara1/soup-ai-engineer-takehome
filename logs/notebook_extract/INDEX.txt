@@ -1,0 +1,97 @@
+Extracted verbatim from takehome_final.ipynb cell outputs.
+Some original standalone files were lost in a Colab session reset; these are copies of preserved notebook outputs, not regenerated runs.
+
+cell_000.txt	!mkdir -p logs
+cell_001.txt	!{ date -u; nvidia-smi; } 2>&1 | tee logs/nvidia_smi_initial.txt
+cell_002.txt	!soup --help 2>&1 | tee logs/soup_help.txt
+cell_003.txt	!soup version | tee logs/soup_version.txt
+cell_004.txt	!soup data --help 2>&1 | tee logs/soup_data_help.txt
+cell_005.txt	!pip install -q "soup-cli[train]"
+cell_006.txt	!for c in inspect validate stats doctor lint; do \
+cell_007.txt	%%writefile prepare_data.py
+cell_008.txt	"""Reproducible DPO sample from d0rj/full-hh-rlhf-ru. Seed 42.
+cell_009.txt	test = ds["test"]
+cell_010.txt	chosen_ratios = [cyr(x) for x in test["chosen"][:2000]]
+cell_011.txt	%%writefile prepare_data.py
+cell_012.txt	"""Reproducible DPO train/eval samples from d0rj/full-hh-rlhf-ru (train split only). Seed 42.
+cell_013.txt	!mkdir -p data logs/data
+cell_014.txt	!for f in train eval; do \
+cell_015.txt	!pip install -q "soup-cli[data]"
+cell_016.txt	!for f in train eval; do \
+cell_017.txt	%%writefile soup.yaml
+cell_018.txt	%%writefile check_config_keys.py
+cell_019.txt	!mkdir -p logs/preflight
+cell_020.txt	!mkdir -p logs/preflight
+cell_021.txt	!pip install -q uv
+cell_022.txt	%env PATH=/content/venv312/bin:/usr/local/nvidia/bin:/usr/local/cuda/bin:/usr/bin:/bin:/usr/local/bin
+cell_023.txt	!which python
+cell_025.txt	%%writefile prepare_data.py
+cell_026.txt	
+cell_027.txt	%%writefile soup.yaml
+cell_029.txt	%%writefile check_config_keys.py
+cell_030.txt	!(date -u; python check_config_keys.py soup.yaml) 2>&1 | tee logs/preflight_py312/config_keys.txt
+cell_031.txt	!mkdir -p logs/env_py312
+cell_032.txt	!mkdir -p logs/preflight_py312
+cell_033.txt	%%bash
+cell_034.txt	%%bash
+cell_035.txt	%%writefile token_audit.py
+cell_036.txt	!(date -u; python token_audit.py) 2>&1 | tee logs/preflight_py312/token_audit.txt
+cell_037.txt	from datetime import datetime, timezone
+cell_038.txt	!(date -u; soup profile -c soup.yaml) 2>&1 | tee logs/preflight_py312/soup_profile.txt
+cell_039.txt	%%bash
+cell_040.txt	!(date -u; \
+cell_041.txt	%%bash
+cell_042.txt	!SOUP=$(python -c "import soup_cli,os;print(os.path.dirname(soup_cli.__file__))"); \
+cell_043.txt	!(date -u; \
+cell_044.txt	%%bash
+cell_045.txt	!mkdir -p data/superseded_v1 && \
+cell_046.txt	from huggingface_hub import HfApi
+cell_047.txt	%%writefile prepare_data.py
+cell_048.txt	!python -m py_compile prepare_data.py && echo "SYNTAX OK"
+cell_049.txt	!python -m py_compile prepare_data.py && echo "SYNTAX OK"
+cell_050.txt	!mkdir -p logs/data_v2
+cell_051.txt	!for f in train eval; do \
+cell_052.txt	!(date -u; soup --log-level verbose train -c soup.yaml --dry-run) \
+cell_053.txt	%%bash
+cell_054.txt	%%writefile verify_training.py
+cell_055.txt	%%bash
+cell_056.txt	%%bash
+cell_057.txt	%%bash
+cell_058.txt	%%bash
+cell_059.txt	%%bash
+cell_060.txt	%%bash
+cell_061.txt	%%bash
+cell_062.txt	%%bash
+cell_063.txt	%%bash
+cell_064.txt	%%bash
+cell_065.txt	%%bash
+cell_066.txt	!grep -n -E "trl_boundary_mismatch|R9_boundary" prepare_data.py
+cell_067.txt	%%bash
+cell_068.txt	!grep -n -E "AutoTokenizer|def ntok" prepare_data.py
+cell_069.txt	from pathlib import Path
+cell_070.txt	!sed -n '65,82p' prepare_data.py
+cell_071.txt	%%bash
+cell_072.txt	%%bash
+cell_073.txt	%%bash
+cell_074.txt	%%bash
+cell_075.txt	%%bash
+cell_076.txt	%%bash
+cell_077.txt	!nvidia-smi
+cell_078.txt	!ls -lah /content
+cell_079.txt	%%bash
+cell_080.txt	%%bash
+cell_081.txt	%%bash
+cell_082.txt	%%bash
+cell_083.txt	%%bash
+cell_084.txt	%%bash
+cell_085.txt	%%bash
+cell_086.txt	%%bash
+cell_087.txt	%%bash
+cell_088.txt	%%bash
+cell_089.txt	%%bash
+cell_090.txt	!/content/venv312/bin/soup ship --help
+cell_091.txt	%%bash
+cell_092.txt	%%bash
+cell_093.txt	%%bash
+cell_094.txt	from google.colab import drive
+cell_095.txt	!cp /content/final_submission_bundle.zip /content/drive/MyDrive/

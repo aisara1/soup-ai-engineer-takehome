@@ -1,0 +1,74 @@
+# SOURCE
+%%bash
+cd /content
+
+rm -f final_submission_bundle.zip
+
+zip -r final_submission_bundle.zip \
+  soup.yaml \
+  prepare_data.py \
+  verify_training.py \
+  run_final.sh \
+  materialize_model.py \
+  data/train.jsonl \
+  data/eval.jsonl \
+  data/ship_tasks.jsonl \
+  logs \
+  artifacts \
+  output/dpo_qwen15b_stream/adapter_config.json \
+  output/dpo_qwen15b_stream/adapter_model.safetensors \
+  output/dpo_qwen15b_stream/README.md \
+  output/dpo_qwen15b_stream/tokenizer_config.json \
+  output/dpo_qwen15b_stream/tokenizer.json \
+  2>/dev/null
+
+echo
+echo "=== BUNDLE ==="
+ls -lh final_submission_bundle.zip
+sha256sum final_submission_bundle.zip
+
+# OUTPUT
+  adding: soup.yaml (deflated 41%)
+  adding: prepare_data.py (deflated 72%)
+  adding: verify_training.py (deflated 63%)
+  adding: run_final.sh (deflated 55%)
+  adding: materialize_model.py (deflated 44%)
+  adding: data/train.jsonl (deflated 75%)
+  adding: data/eval.jsonl (deflated 74%)
+  adding: data/ship_tasks.jsonl (deflated 74%)
+  adding: logs/ (stored 0%)
+  adding: logs/train_final_v3/ (stored 0%)
+  adding: logs/train_final_v3/run_info.txt (deflated 33%)
+  adding: logs/train_final_v3/nvidia_smi_before.txt (deflated 76%)
+  adding: logs/train_final_v3/training.log (deflated 76%)
+  adding: logs/train_final_v3/nvidia_smi_sampling.csv (deflated 89%)
+  adding: logs/train_final_v3/nvidia_smi_after.txt (deflated 77%)
+  adding: logs/train_final_v3_aborted_prompt/ (stored 0%)
+  adding: logs/train_final_v3_aborted_prompt/run_info.txt (deflated 33%)
+  adding: logs/train_final_v3_aborted_prompt/nvidia_smi_before.txt (deflated 77%)
+  adding: logs/train_final_v3_aborted_prompt/training.log (deflated 78%)
+  adding: logs/train_final_v3_aborted_prompt/nvidia_smi_sampling.csv (deflated 71%)
+  adding: logs/train_final_v3_aborted_prompt/nvidia_smi_after.txt (deflated 76%)
+  adding: logs/model_materialization_final.txt (deflated 51%)
+  adding: logs/verify/ (stored 0%)
+  adding: logs/verify/post_final.log (deflated 71%)
+  adding: logs/verify/baseline_final_rebuild.log (deflated 73%)
+  adding: logs/data_rebuild_final.txt (deflated 67%)
+  adding: logs/ship/ (stored 0%)
+  adding: logs/ship/soup_ship_final.log (deflated 77%)
+  adding: artifacts/ (stored 0%)
+  adding: artifacts/baseline_logps.json (deflated 75%)
+  adding: artifacts/soup_ship_verdict.json (deflated 74%)
+  adding: artifacts/control_zero_adapter.json (deflated 75%)
+  adding: artifacts/post_logps.json (deflated 79%)
+  adding: artifacts/control_random_adapter.json (deflated 74%)
+  adding: artifacts/soup_ship_evidence.json (deflated 62%)
+  adding: output/dpo_qwen15b_stream/adapter_config.json (deflated 61%)
+  adding: output/dpo_qwen15b_stream/adapter_model.safetensors (deflated 8%)
+  adding: output/dpo_qwen15b_stream/README.md (deflated 47%)
+  adding: output/dpo_qwen15b_stream/tokenizer_config.json (deflated 59%)
+  adding: output/dpo_qwen15b_stream/tokenizer.json (deflated 81%)
+
+=== BUNDLE ===
+-rw-r--r-- 1 root root 68M Oct  1 09:37 final_submission_bundle.zip
+ab22f4ac87bc78dfb3ba330a92ad2cecfa8b52d7f8969a967875a408c5e1c158  final_submission_bundle.zip

@@ -1,0 +1,87 @@
+# SOURCE
+%%bash
+cd /content
+set -e
+
+if [ -e output/dpo_qwen15b_stream ]; then
+    echo "ERROR: final output path already exists"
+    ls -lah output/dpo_qwen15b_stream
+    exit 1
+fi
+
+echo "FINAL OUTPUT PATH CLEAN"
+bash run_final.sh
+
+# OUTPUT
+FINAL OUTPUT PATH CLEAN
+=== FINAL RUN START ===
+Thu Oct  1 08:02:00 AM UTC 2026
+
+=== INPUT HASHES ===
+82ea3a7ca287bb51272f667aa1d2cdb84ccd6bdbff96d1bf8e1390da447767e3  soup.yaml
+175f3ad1ae66034c557f7d54efe30121c6e5b7e99169127539dacb2207e3df67  data/train.jsonl
+ae130e18936df26dbd9db8921f2c131bff394236cb620e7ec2c12ed834c6b4c2  data/eval.jsonl
+981595fe71f26feb321efe2bf9af8cdbc76365141daeb1f52979c85920b38553  prepare_data.py
+f44ce1a3e7f52e280bb1f9add56c15597fe99d46bba008ec8da932a63d89b822  verify_training.py
+dd924a11b4c220f385b51ffa522daea7c9f3d850e31b162bb5661df483c6d3ee  /content/models/qwen2.5-1.5b-pinned/model.safetensors
+
+=== GPU BEFORE ===
+Thu Oct  1 08:02:32 2026       
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 580.82.07              Driver Version: 580.82.07      CUDA Version: 13.0     |
++-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  Tesla T4                       Off |   00000000:00:04.0 Off |                    0 |
+| N/A   47C    P8             10W /   70W |       0MiB /  15360MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|  No running processes found                                                             |
++-----------------------------------------------------------------------------------------+
+Loading config from soup.yaml...
+╭─────────────────────────────── Training Setup ───────────────────────────────╮
+│ Device:  Tesla T4                                                            │
+│ Memory:  14.6 GB                                                             │
+│ Model:   /content/models/qwen2.5-1.5b-pinned                                 │
+│ Task:    dpo                                                                 │
+│ Backend: transformers                                                        │
+│ LoRA:    r=16, alpha=32                                                      │
+│ Quant:   none                                                                │
+│ Seed:    42                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────╯
+Start training? [Y/n]: Aborted.
+
+=== GPU AFTER ===
+Thu Oct  1 08:02:41 2026       
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 580.82.07              Driver Version: 580.82.07      CUDA Version: 13.0     |
++-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  Tesla T4                       Off |   00000000:00:04.0 Off |                    0 |
+| N/A   48C    P8             13W /   70W |       0MiB /  15360MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|  No running processes found                                                             |
++-----------------------------------------------------------------------------------------+
+
+=== FINAL RUN END ===
+Thu Oct  1 08:02:41 AM UTC 2026
+training exit code: 1
+ERROR: CalledProcessError: Command 'b'cd /content\nset -e\n\nif [ -e output/dpo_qwen15b_stream ]; then\n    echo "ERROR: final output path already exists"\n    ls -lah output/dpo_qwen15b_stream\n    exit 1\nfi\n\necho "FINAL OUTPUT PATH CLEAN"\nbash run_final.sh\n'' returned non-zero exit status 1.

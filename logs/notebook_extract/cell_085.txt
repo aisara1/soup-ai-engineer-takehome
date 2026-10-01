@@ -1,0 +1,30 @@
+# SOURCE
+%%bash
+cd /content
+
+mkdir -p artifacts logs/verify
+
+/content/venv312/bin/python verify_training.py --baseline \
+  2>&1 | tee logs/verify/baseline_final_rebuild.log
+
+echo
+echo "=== BASELINE ARTIFACT HASHES ==="
+sha256sum \
+  artifacts/baseline_logps.json \
+  artifacts/control_zero_adapter.json \
+  data/eval.jsonl
+
+# OUTPUT
+Loading weights:   0%|          | 0/338 [00:00<?, ?it/s]Loading weights:   0%|          | 1/338 [00:03<20:01,  3.57s/it]Loading weights:  19%|█▊        | 63/338 [00:03<00:12, 22.75it/s]Loading weights:  23%|██▎       | 78/338 [00:04<00:10, 23.99it/s]Loading weights:  26%|██▌       | 87/338 [00:04<00:09, 25.93it/s]Loading weights:  28%|██▊       | 95/338 [00:04<00:08, 27.46it/s]Loading weights:  30%|██▉       | 101/338 [00:05<00:09, 25.67it/s]Loading weights:  33%|███▎      | 111/338 [00:05<00:07, 29.37it/s]Loading weights:  34%|███▍      | 116/338 [00:05<00:07, 28.09it/s]Loading weights:  37%|███▋      | 124/338 [00:05<00:07, 30.02it/s]Loading weights:  40%|███▉      | 135/338 [00:06<00:06, 31.95it/s]Loading weights:  41%|████      | 139/338 [00:06<00:06, 28.58it/s]Loading weights:  44%|████▍     | 148/338 [00:06<00:05, 31.82it/s]Loading weights:  47%|████▋     | 159/338 [00:06<00:05, 33.27it/s]Loading weights:  48%|████▊     | 163/338 [00:07<00:05, 29.38it/s]Loading weights:  51%|█████     | 172/338 [00:07<00:05, 32.59it/s]Loading weights:  52%|█████▏    | 176/338 [00:07<00:04, 33.52it/s]Loading weights:  54%|█████▍    | 183/338 [00:07<00:04, 32.06it/s]Loading weights:  55%|█████▌    | 187/338 [00:07<00:05, 26.15it/s]Loading weights:  58%|█████▊    | 195/338 [00:07<00:04, 34.41it/s]Loading weights:  59%|█████▉    | 200/338 [00:08<00:04, 29.40it/s]Loading weights:  61%|██████    | 207/338 [00:08<00:04, 28.19it/s]Loading weights:  62%|██████▏   | 211/338 [00:08<00:05, 23.92it/s]Loading weights:  65%|██████▍   | 219/338 [00:08<00:03, 31.83it/s]Loading weights:  66%|██████▋   | 224/338 [00:09<00:04, 28.43it/s]Loading weights:  68%|██████▊   | 231/338 [00:09<00:03, 28.52it/s]Loading weights:  70%|██████▉   | 235/338 [00:09<00:04, 24.19it/s]Loading weights:  72%|███████▏  | 243/338 [00:09<00:02, 32.86it/s]Loading weights:  73%|███████▎  | 248/338 [00:09<00:03, 29.11it/s]Loading weights:  75%|███████▌  | 255/338 [00:10<00:02, 32.10it/s]Loading weights:  77%|███████▋  | 259/338 [00:10<00:02, 29.23it/s]Loading weights:  79%|███████▉  | 268/338 [00:10<00:02, 33.31it/s]Loading weights:  83%|████████▎ | 279/338 [00:10<00:01, 34.29it/s]Loading weights:  84%|████████▎ | 283/338 [00:11<00:01, 29.16it/s]Loading weights:  86%|████████▌ | 291/338 [00:11<00:01, 37.00it/s]Loading weights:  88%|████████▊ | 296/338 [00:11<00:01, 33.27it/s]Loading weights:  90%|████████▉ | 303/338 [00:11<00:01, 33.24it/s]Loading weights:  91%|█████████ | 307/338 [00:11<00:01, 28.42it/s]Loading weights:  93%|█████████▎| 316/338 [00:11<00:00, 32.39it/s]Loading weights:  97%|█████████▋| 327/338 [00:12<00:00, 33.66it/s]Loading weights:  98%|█████████▊| 331/338 [00:12<00:00, 32.04it/s]Loading weights: 100%|██████████| 338/338 [00:12<00:00, 27.21it/s]
+[encode] {"special_tokens_default_equals_false": true, "completions_where_separate_tokenization_differs": 0, "completions_total": 100, "max_prompt_tok": 457, "max_total_tok": 872, "soup_cap_noop": true}
+[baseline] {"n": 50, "mean_logp_chosen": -234.9394, "mean_logp_rejected": -250.916, "mean_margin": 15.9766, "median_margin": -5.7593, "frac_chosen_gt_rejected": 0.46, "mean_margin_per_tok": 0.1779}
+[baseline] repeat_max_abs_diff=0.000e+00
+wrote artifacts/baseline_logps.json
+[control_zero_adapter] lora_B tensors=196 nonzero=0 mean_delta=0.000e+00 max_abs_delta=0.000e+00 -> NOT_TRAINED (adapter params absent/zero/not loaded)
+[control_zero_adapter] EXPECTED: NOT_TRAINED -> PASS
+wrote artifacts/control_zero_adapter.json
+
+=== BASELINE ARTIFACT HASHES ===
+6f70b49a0f8c4442b6811567d87fc080aa6659eefd4d7a686ed73ad5a740dba2  artifacts/baseline_logps.json
+70319be1621e64d586d03c7613604d179aae6a9c54689219929725f97486af58  artifacts/control_zero_adapter.json
+ae130e18936df26dbd9db8921f2c131bff394236cb620e7ec2c12ed834c6b4c2  data/eval.jsonl

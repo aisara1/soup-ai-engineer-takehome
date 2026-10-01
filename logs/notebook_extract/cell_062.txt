@@ -1,0 +1,26 @@
+# SOURCE
+%%bash
+
+mkdir -p logs/preflight_local_base
+
+(
+  date -u
+  /content/venv312/bin/soup --log-level verbose train -c soup.yaml --dry-run
+) 2>&1 | tee logs/preflight_local_base/dry_run.txt
+
+# OUTPUT
+Wed Sep 30 01:18:21 PM UTC 2026
+Loading config from soup.yaml...
+╭─────────────────────────────── Training Setup ───────────────────────────────╮
+│ Device:  Tesla T4                                                            │
+│ Memory:  14.6 GB                                                             │
+│ Model:   /content/models/qwen2.5-1.5b-pinned                                 │
+│ Task:    dpo                                                                 │
+│ Backend: transformers                                                        │
+│ LoRA:    r=16, alpha=32                                                      │
+│ Quant:   none                                                                │
+│ Seed:    42                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────╯
+Dry run - validating data...
+Data OK: 500 train samples
+Config valid. Ready to train!

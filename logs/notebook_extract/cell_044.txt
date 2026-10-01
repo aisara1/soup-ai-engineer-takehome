@@ -1,0 +1,37 @@
+# SOURCE
+%%bash
+
+mkdir -p logs/preflight_py312
+
+date -u
+
+python - <<'PY' 2>&1 | tee logs/preflight_py312/trl_rendering_check.txt
+import json
+import trl
+
+from trl.data_utils import is_conversational, maybe_apply_chat_template
+from transformers import AutoTokenizer
+
+tok = AutoTokenizer.from_pretrained("Qwen/Qwen2.5-1.5B-Instruct")
+
+with open("data/train.jsonl", encoding="utf-8") as f:
+    row = json.loads(f.readline())
+
+print("trl", trl.__version__, "| is_conversational:", is_conversational(row))
+
+out = maybe_apply_chat_template(row, tok)
+
+print("prompt changed by template:", out["prompt"] != row["prompt"])
+print("prompt tail:", repr(out["prompt"][-80:]))
+print("chosen head:", repr(out["chosen"][:60]))
+print("eos:", repr(tok.eos_token))
+PY
+
+# OUTPUT
+Wed Sep 30 11:55:22 AM UTC 2026
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+trl 0.29.1 | is_conversational: False
+prompt changed by template: False
+prompt tail: 'Человек: Можешь помочь мне написать страшную историю?\n\nАссистент:'
+chosen head: 'Конечно, буду рад помочь! Давайте обсудим некоторые идеи для'
+eos: '<|im_end|>'

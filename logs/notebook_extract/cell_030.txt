@@ -1,0 +1,104 @@
+# SOURCE
+!(date -u; python check_config_keys.py soup.yaml) 2>&1 | tee logs/preflight_py312/config_keys.txt
+
+# OUTPUT
+Wed Sep 30 11:08:06 AM UTC 2026
+schema file: /content/venv312/lib/python3.12/site-packages/soup_cli/config/schema.py
+root model: SoupConfig
+ok       base
+ok       task
+ok       backend
+ok       data
+ok       data.train
+ok       data.format
+ok       data.max_length
+ok       data.val_split
+ok       training
+ok       training.epochs
+ok       training.lr
+ok       training.batch_size
+ok       training.gradient_accumulation_steps
+ok       training.quantization
+ok       training.gradient_checkpointing
+ok       training.stream_layers
+ok       training.stream_source
+ok       training.stream_buffers
+ok       training.dpo_beta
+ok       training.seed
+ok       training.lora
+ok       training.lora.r
+ok       training.lora.alpha
+ok       training.lora.dropout
+ok       training.lora.target_modules
+ok       output
+
+--- data (DataConfig) relevant fields: name | default ---
+  val_split | 0.1
+  raft_shuffle_seed | None
+  replay_seed | None
+  streaming | False
+  eval_on_each_dataset | False
+
+--- training (TrainingConfig) relevant fields: name | default ---
+  seed | None
+  data_seed | None
+  warmup_ratio | 0.03
+  scheduler | 'cosine'
+  save_steps | 100
+  logging_steps | 10
+  dpo_beta | 0.1
+  kto_beta | 0.1
+  orpo_beta | 0.1
+  bco_beta | 0.1
+  preference_loss | None
+  dpo_beta_schedule | None
+  dpo_beta_end | None
+  dpo_ref_regen_epochs | None
+  preference_loss_weights | None
+  grpo_beta | 0.1
+  online_dpo_loss_type | 'sigmoid'
+  grpo_fp16 | False
+  ref_model_ema_alpha | None
+  async_grpo_prefetch | False
+  quantize_ref_model | False
+  rl_checkpoint_save_every_steps | None
+  rl_checkpoint_include_ref_model | False
+  reward_hack_beta_floor | 0.02
+  reward_hack_beta_ceil | 1.0
+  reward_hack_signal_target | 0.15
+  yarn_beta_fast | None
+  yarn_beta_slow | None
+  relora_warmup_ratio | 0.1
+  warmup_auto | False
+  auto_mixed_precision | False
+  lisa_interval_steps | 20
+  stream_layers | False
+  stream_source | 'auto'
+  stream_ngram_source | 'auto'
+  stream_buffers | 2
+  stream_pin | None
+  stream_vram_override | None
+  stream_vram_probe | False
+  stream_disk_kind | None
+  forgetting_eval_steps | 100
+  checkpoint_eval_steps | 200
+  checkpoint_eval_metric | 'composite'
+  checkpoint_eval_tasks | None
+  eval_gate | None
+--- training.lora (LoraConfig) all fields ---
+  r | 64
+  alpha | 16
+  dropout | 0.05
+  target_modules | 'auto'
+  target_parameters | None
+  use_dora | False
+  use_rslora | False
+  use_vera | False
+  use_olora | False
+  rank_pattern | None
+  alpha_pattern | None
+  init_strategy | 'random'
+  loftq_iter | 1
+  loftq_bits | 4
+
+UNKNOWN KEYS: none

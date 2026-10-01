@@ -1,0 +1,54 @@
+# SOURCE
+%%bash
+
+mkdir -p logs/train
+
+/content/venv312/bin/python - <<'PY' 2>&1 | tee logs/train/hf_cache_diagnostic.txt
+import os
+import huggingface_hub
+from huggingface_hub import snapshot_download
+
+MODEL = "Qwen/Qwen2.5-1.5B-Instruct"
+REV = "989aa7980e4cf806f80c7fef2b1adb7bc71aa306"
+
+snap = snapshot_download(
+    MODEL,
+    revision=REV,
+    local_files_only=True,
+)
+
+p = os.path.join(snap, "model.safetensors")
+repo_root = os.path.dirname(os.path.dirname(snap))
+blob_root = os.path.realpath(os.path.join(repo_root, "blobs"))
+real = os.path.realpath(p)
+
+print("huggingface_hub:", huggingface_hub.__version__)
+print("HF_HOME:", os.environ.get("HF_HOME"))
+print("HF_HUB_CACHE:", os.environ.get("HF_HUB_CACHE"))
+print()
+print("snapshot:", snap)
+print("model.safetensors exists:", os.path.exists(p))
+print("is symlink:", os.path.islink(p))
+print("readlink:", os.readlink(p) if os.path.islink(p) else None)
+print("realpath:", real)
+print("expected blob root:", blob_root)
+print(
+    "inside expected blob root:",
+    os.path.commonpath([real, blob_root]) == blob_root
+)
+PY
+
+# OUTPUT
+Traceback (most recent call last):
+  File "<stdin>", line 8, in <module>
+  File "/content/venv312/lib/python3.12/site-packages/huggingface_hub/utils/_validators.py", line 89, in _inner_fn
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/content/venv312/lib/python3.12/site-packages/huggingface_hub/utils/_http.py", line 266, in _inner
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/content/venv312/lib/python3.12/site-packages/huggingface_hub/_snapshot_download.py", line 330, in snapshot_download
+    _raise_if_incomplete_snapshot(
+  File "/content/venv312/lib/python3.12/site-packages/huggingface_hub/_snapshot_download.py", line 586, in _raise_if_incomplete_snapshot
+    raise IncompleteSnapshotError(
+huggingface_hub.errors.IncompleteSnapshotError: The cached snapshot for 'Qwen/Qwen2.5-1.5B-Instruct' (revision '989aa7980e4cf806f80c7fef2b1adb7bc71aa306', commit 989aa7980e4cf806f80c7fef2b1adb7bc71aa306) is incomplete: 3 file(s) are missing (.gitattributes, LICENSE, README.md). Outgoing traffic is disabled ('local_files_only=True'). Re-run the download with network access to complete the snapshot.

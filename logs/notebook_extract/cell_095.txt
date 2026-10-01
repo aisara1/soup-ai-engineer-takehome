@@ -1,0 +1,6 @@
+# SOURCE
+!cp /content/final_submission_bundle.zip /content/drive/MyDrive/
+!ls -lh /content/drive/MyDrive/final_submission_bundle.zip
+
+# OUTPUT
+-rw------- 1 root root 68M Oct  1 09:49 /content/drive/MyDrive/final_submission_bundle.zip

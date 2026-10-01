@@ -1,0 +1,5 @@
+# SOURCE
+%%writefile prepare_data.py
+
+# OUTPUT
+Writing prepare_data.py
