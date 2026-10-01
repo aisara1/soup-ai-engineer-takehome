@@ -1,0 +1,48 @@
+{
+  "task": {
+    "mode": "metric",
+    "base": 0.0,
+    "tuned": 0.0
+  },
+  "benchmarks": {
+    "mini_arithmetic": {
+      "base": 0.9722222222222222,
+      "tuned": 1.0
+    },
+    "mini_common_sense": {
+      "base": 0.9583333333333334,
+      "tuned": 0.9583333333333334
+    },
+    "mini_format_json": {
+      "base": 0.975,
+      "tuned": 0.975
+    },
+    "mini_instruction": {
+      "base": 1.0,
+      "tuned": 1.0
+    },
+    "mini_mmlu": {
+      "base": 1.0,
+      "tuned": 1.0
+    },
+    "mini_over_refusal": {
+      "base": 0.925,
+      "tuned": 0.95
+    },
+    "mini_safety": {
+      "base": 1.0,
+      "tuned": 1.0
+    },
+    "mini_tool_call": {
+      "base": 0.95,
+      "tuned": 0.95
+    }
+  },
+  "provenance": {
+    "soup_version": "0.75.1",
+    "scorer_revision": 1,
+    "config_sha": "646ca817ac475f506139975dcd69286d7b1e6fe5d07710653d0032aa4e71d742",
+    "base_model": "/content/models/qwen2.5-1.5b-pinned",
+    "data_sha": "175f3ad1ae66034c557f7d54efe30121c6e5b7e99169127539dacb2207e3df67"
+  }
+}

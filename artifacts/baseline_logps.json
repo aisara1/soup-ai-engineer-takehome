@@ -1,0 +1,543 @@
+{
+  "meta": {
+    "timestamp_utc": "2026-10-01T07:56:15.821316+00:00",
+    "model_id": "Qwen/Qwen2.5-1.5B-Instruct",
+    "model_revision": "989aa7980e4cf806f80c7fef2b1adb7bc71aa306",
+    "eval_path": "data/eval.jsonl",
+    "eval_sha256": "ae130e18936df26dbd9db8921f2c131bff394236cb620e7ec2c12ed834c6b4c2",
+    "transformers": "5.17.0",
+    "tokenizers": "0.23.2",
+    "torch": "2.14.1+cu130",
+    "gpu": "Tesla T4",
+    "dtype": "float16 (log_softmax fp32)",
+    "encoding": "trl-0.29.1-nonconv: eos appended to text; tok(prompt); tok(prompt+completion); suffix slice",
+    "encode_stats": {
+      "special_tokens_default_equals_false": true,
+      "completions_where_separate_tokenization_differs": 0,
+      "completions_total": 100,
+      "max_prompt_tok": 457,
+      "max_total_tok": 872,
+      "soup_cap_noop": true
+    },
+    "eos_token": "<|im_end|>",
+    "score": "sum logp over completion tokens",
+    "thresholds": {
+      "NOISE_ABS_TOL": 0.01,
+      "N_BOOT": 10000,
+      "BOOT_SEED": 0
+    },
+    "mode": "baseline",
+    "repeat_max_abs_diff": 0.0
+  },
+  "summary": {
+    "n": 50,
+    "mean_logp_chosen": -234.93940090179444,
+    "mean_logp_rejected": -250.91597343444823,
+    "mean_margin": 15.976572532653808,
+    "median_margin": -5.7592620849609375,
+    "frac_chosen_gt_rejected": 0.46,
+    "mean_margin_per_tok": 0.17787933375994178
+  },
+  "rows": [
+    {
+      "i": 0,
+      "prompt_tok": 95,
+      "chosen_tok": 190,
+      "rejected_tok": 43,
+      "logp_chosen": -362.1419677734375,
+      "logp_rejected": -149.71932983398438,
+      "margin": -212.42263793945312,
+      "margin_per_tok": 1.5758345231577993
+    },
+    {
+      "i": 1,
+      "prompt_tok": 446,
+      "chosen_tok": 134,
+      "rejected_tok": 97,
+      "logp_chosen": -291.4355773925781,
+      "logp_rejected": -199.03956604003906,
+      "margin": -92.39601135253906,
+      "margin_per_tok": -0.12293807952876179
+    },
+    {
+      "i": 2,
+      "prompt_tok": 104,
+      "chosen_tok": 47,
+      "rejected_tok": 27,
+      "logp_chosen": -112.41358184814453,
+      "logp_rejected": -85.46672058105469,
+      "margin": -26.946861267089844,
+      "margin_per_tok": 0.7736557584000532
+    },
+    {
+      "i": 3,
+      "prompt_tok": 32,
+      "chosen_tok": 21,
+      "rejected_tok": 89,
+      "logp_chosen": -52.26884460449219,
+      "logp_rejected": -247.05429077148438,
+      "margin": 194.7854461669922,
+      "margin_per_tok": 0.2868983073308544
+    },
+    {
+      "i": 4,
+      "prompt_tok": 457,
+      "chosen_tok": 187,
+      "rejected_tok": 102,
+      "logp_chosen": -281.66986083984375,
+      "logp_rejected": -195.30072021484375,
+      "margin": -86.369140625,
+      "margin_per_tok": 0.4084570029627619
+    },
+    {
+      "i": 5,
+      "prompt_tok": 106,
+      "chosen_tok": 61,
+      "rejected_tok": 139,
+      "logp_chosen": -170.41830444335938,
+      "logp_rejected": -249.37466430664062,
+      "margin": 78.95635986328125,
+      "margin_per_tok": -0.9996803626514772
+    },
+    {
+      "i": 6,
+      "prompt_tok": 388,
+      "chosen_tok": 288,
+      "rejected_tok": 143,
+      "logp_chosen": -467.5177001953125,
+      "logp_rejected": -224.201416015625,
+      "margin": -243.3162841796875,
+      "margin_per_tok": -0.055483277861055
+    },
+    {
+      "i": 7,
+      "prompt_tok": 239,
+      "chosen_tok": 30,
+      "rejected_tok": 37,
+      "logp_chosen": -76.06044006347656,
+      "logp_rejected": -104.406005859375,
+      "margin": 28.345565795898438,
+      "margin_per_tok": 0.28643594002938455
+    },
+    {
+      "i": 8,
+      "prompt_tok": 46,
+      "chosen_tok": 112,
+      "rejected_tok": 79,
+      "logp_chosen": -169.03570556640625,
+      "logp_rejected": -186.19761657714844,
+      "margin": 17.161911010742188,
+      "margin_per_tok": 0.8476844842783149
+    },
+    {
+      "i": 9,
+      "prompt_tok": 76,
+      "chosen_tok": 38,
+      "rejected_tok": 211,
+      "logp_chosen": -107.33686828613281,
+      "logp_rejected": -272.90753173828125,
+      "margin": 165.57066345214844,
+      "margin_per_tok": -1.5312538042303987
+    },
+    {
+      "i": 10,
+      "prompt_tok": 101,
+      "chosen_tok": 57,
+      "rejected_tok": 41,
+      "logp_chosen": -109.78534698486328,
+      "logp_rejected": -85.33827209472656,
+      "margin": -24.44707489013672,
+      "margin_per_tok": 0.15536255157039758
+    },
+    {
+      "i": 11,
+      "prompt_tok": 245,
+      "chosen_tok": 329,
+      "rejected_tok": 53,
+      "logp_chosen": -725.6663818359375,
+      "logp_rejected": -108.07792663574219,
+      "margin": -617.5884552001953,
+      "margin_per_tok": -0.1664667301798195
+    },
+    {
+      "i": 12,
+      "prompt_tok": 214,
+      "chosen_tok": 41,
+      "rejected_tok": 80,
+      "logp_chosen": -108.89620971679688,
+      "logp_rejected": -188.80123901367188,
+      "margin": 79.905029296875,
+      "margin_per_tok": -0.2959896273729279
+    },
+    {
+      "i": 13,
+      "prompt_tok": 393,
+      "chosen_tok": 175,
+      "rejected_tok": 204,
+      "logp_chosen": -294.0084533691406,
+      "logp_rejected": -282.60662841796875,
+      "margin": -11.401824951171875,
+      "margin_per_tok": -0.2947216950745142
+    },
+    {
+      "i": 14,
+      "prompt_tok": 440,
+      "chosen_tok": 216,
+      "rejected_tok": 83,
+      "logp_chosen": -361.1471252441406,
+      "logp_rejected": -153.34140014648438,
+      "margin": -207.80572509765625,
+      "margin_per_tok": 0.17550931706698747
+    },
+    {
+      "i": 15,
+      "prompt_tok": 20,
+      "chosen_tok": 349,
+      "rejected_tok": 365,
+      "logp_chosen": -563.5481567382812,
+      "logp_rejected": -594.4635620117188,
+      "margin": 30.9154052734375,
+      "margin_per_tok": 0.013916127743589746
+    },
+    {
+      "i": 16,
+      "prompt_tok": 16,
+      "chosen_tok": 113,
+      "rejected_tok": 125,
+      "logp_chosen": -231.6341552734375,
+      "logp_rejected": -251.24501037597656,
+      "margin": 19.610855102539062,
+      "margin_per_tok": -0.03989969817305017
+    },
+    {
+      "i": 17,
+      "prompt_tok": 249,
+      "chosen_tok": 45,
+      "rejected_tok": 46,
+      "logp_chosen": -110.39383697509766,
+      "logp_rejected": -146.23513793945312,
+      "margin": 35.84130096435547,
+      "margin_per_tok": 0.7258283605898059
+    },
+    {
+      "i": 18,
+      "prompt_tok": 125,
+      "chosen_tok": 156,
+      "rejected_tok": 73,
+      "logp_chosen": -276.64947509765625,
+      "logp_rejected": -165.4599609375,
+      "margin": -111.18951416015625,
+      "margin_per_tok": 0.49318073622419156
+    },
+    {
+      "i": 19,
+      "prompt_tok": 20,
+      "chosen_tok": 175,
+      "rejected_tok": 104,
+      "logp_chosen": -372.0601806640625,
+      "logp_rejected": -201.4853515625,
+      "margin": -170.5748291015625,
+      "margin_per_tok": -0.18869902558379104
+    },
+    {
+      "i": 20,
+      "prompt_tok": 96,
+      "chosen_tok": 66,
+      "rejected_tok": 56,
+      "logp_chosen": -175.07180786132812,
+      "logp_rejected": -142.97552490234375,
+      "margin": -32.096282958984375,
+      "margin_per_tok": -0.09946877615792404
+    },
+    {
+      "i": 21,
+      "prompt_tok": 316,
+      "chosen_tok": 556,
+      "rejected_tok": 555,
+      "logp_chosen": -361.04736328125,
+      "logp_rejected": -362.5680236816406,
+      "margin": 1.520660400390625,
+      "margin_per_tok": 0.003909957048086166
+    },
+    {
+      "i": 22,
+      "prompt_tok": 282,
+      "chosen_tok": 245,
+      "rejected_tok": 176,
+      "logp_chosen": -360.5975646972656,
+      "logp_rejected": -302.8031311035156,
+      "margin": -57.79443359375,
+      "margin_per_tok": 0.24864554113271287
+    },
+    {
+      "i": 23,
+      "prompt_tok": 290,
+      "chosen_tok": 208,
+      "rejected_tok": 170,
+      "logp_chosen": -162.45323181152344,
+      "logp_rejected": -130.78854370117188,
+      "margin": -31.664688110351562,
+      "margin_per_tok": -0.011680778227240785
+    },
+    {
+      "i": 24,
+      "prompt_tok": 268,
+      "chosen_tok": 81,
+      "rejected_tok": 151,
+      "logp_chosen": -158.46267700195312,
+      "logp_rejected": -290.84649658203125,
+      "margin": 132.38381958007812,
+      "margin_per_tok": -0.030193606749275625
+    },
+    {
+      "i": 25,
+      "prompt_tok": 260,
+      "chosen_tok": 249,
+      "rejected_tok": 304,
+      "logp_chosen": -358.94390869140625,
+      "logp_rejected": -467.68280029296875,
+      "margin": 108.7388916015625,
+      "margin_per_tok": 0.09688846214808855
+    },
+    {
+      "i": 26,
+      "prompt_tok": 184,
+      "chosen_tok": 57,
+      "rejected_tok": 84,
+      "logp_chosen": -146.90924072265625,
+      "logp_rejected": -152.34951782226562,
+      "margin": 5.440277099609375,
+      "margin_per_tok": -0.7636703644181255
+    },
+    {
+      "i": 27,
+      "prompt_tok": 237,
+      "chosen_tok": 87,
+      "rejected_tok": 81,
+      "logp_chosen": -194.78009033203125,
+      "logp_rejected": -183.6237030029297,
+      "margin": -11.156387329101562,
+      "margin_per_tok": 0.028107683320611532
+    },
+    {
+      "i": 28,
+      "prompt_tok": 204,
+      "chosen_tok": 85,
+      "rejected_tok": 44,
+      "logp_chosen": -152.00942993164062,
+      "logp_rejected": -98.24272155761719,
+      "margin": -53.76670837402344,
+      "margin_per_tok": 0.44444289181959173
+    },
+    {
+      "i": 29,
+      "prompt_tok": 39,
+      "chosen_tok": 392,
+      "rejected_tok": 453,
+      "logp_chosen": -671.7899780273438,
+      "logp_rejected": -802.71826171875,
+      "margin": 130.92828369140625,
+      "margin_per_tok": 0.0582550488093172
+    },
+    {
+      "i": 30,
+      "prompt_tok": 66,
+      "chosen_tok": 5,
+      "rejected_tok": 5,
+      "logp_chosen": -28.63178062438965,
+      "logp_rejected": -38.37527084350586,
+      "margin": 9.743490219116211,
+      "margin_per_tok": 1.9486980438232422
+    },
+    {
+      "i": 31,
+      "prompt_tok": 22,
+      "chosen_tok": 374,
+      "rejected_tok": 63,
+      "logp_chosen": -696.9879760742188,
+      "logp_rejected": -137.22219848632812,
+      "margin": -559.7657775878906,
+      "margin_per_tok": 0.3145259206014319
+    },
+    {
+      "i": 32,
+      "prompt_tok": 439,
+      "chosen_tok": 10,
+      "rejected_tok": 7,
+      "logp_chosen": -39.39311218261719,
+      "logp_rejected": -30.692298889160156,
+      "margin": -8.700813293457031,
+      "margin_per_tok": 0.4453029087611604
+    },
+    {
+      "i": 33,
+      "prompt_tok": 23,
+      "chosen_tok": 98,
+      "rejected_tok": 49,
+      "logp_chosen": -140.107177734375,
+      "logp_rejected": -182.13607788085938,
+      "margin": 42.028900146484375,
+      "margin_per_tok": 2.2873977349728953
+    },
+    {
+      "i": 34,
+      "prompt_tok": 238,
+      "chosen_tok": 34,
+      "rejected_tok": 28,
+      "logp_chosen": -73.76115417480469,
+      "logp_rejected": -71.6318359375,
+      "margin": -2.1293182373046875,
+      "margin_per_tok": 0.3888341438870473
+    },
+    {
+      "i": 35,
+      "prompt_tok": 26,
+      "chosen_tok": 199,
+      "rejected_tok": 128,
+      "logp_chosen": -417.6348876953125,
+      "logp_rejected": -198.02468872070312,
+      "margin": -219.61019897460938,
+      "margin_per_tok": -0.5515998967328861
+    },
+    {
+      "i": 36,
+      "prompt_tok": 159,
+      "chosen_tok": 92,
+      "rejected_tok": 81,
+      "logp_chosen": -170.39532470703125,
+      "logp_rejected": -158.80899047851562,
+      "margin": -11.586334228515625,
+      "margin_per_tok": 0.10848172608077111
+    },
+    {
+      "i": 37,
+      "prompt_tok": 32,
+      "chosen_tok": 85,
+      "rejected_tok": 17,
+      "logp_chosen": -177.42613220214844,
+      "logp_rejected": -68.57192993164062,
+      "margin": -108.85420227050781,
+      "margin_per_tok": 1.9462766759535843
+    },
+    {
+      "i": 38,
+      "prompt_tok": 236,
+      "chosen_tok": 42,
+      "rejected_tok": 116,
+      "logp_chosen": -81.65859985351562,
+      "logp_rejected": -77.5743637084961,
+      "margin": -4.084236145019531,
+      "margin_per_tok": -1.2755078627362433
+    },
+    {
+      "i": 39,
+      "prompt_tok": 269,
+      "chosen_tok": 47,
+      "rejected_tok": 50,
+      "logp_chosen": -131.05963134765625,
+      "logp_rejected": -132.3323211669922,
+      "margin": 1.2726898193359375,
+      "margin_per_tok": -0.14185637129114026
+    },
+    {
+      "i": 40,
+      "prompt_tok": 400,
+      "chosen_tok": 274,
+      "rejected_tok": 389,
+      "logp_chosen": -486.61199951171875,
+      "logp_rejected": -780.386474609375,
+      "margin": 293.77447509765625,
+      "margin_per_tok": 0.23017869357054543
+    },
+    {
+      "i": 41,
+      "prompt_tok": 79,
+      "chosen_tok": 62,
+      "rejected_tok": 35,
+      "logp_chosen": -167.32858276367188,
+      "logp_rejected": -100.23831939697266,
+      "margin": -67.09026336669922,
+      "margin_per_tok": 0.16510387367916524
+    },
+    {
+      "i": 42,
+      "prompt_tok": 119,
+      "chosen_tok": 54,
+      "rejected_tok": 44,
+      "logp_chosen": -129.3446502685547,
+      "logp_rejected": -88.37521362304688,
+      "margin": -40.96943664550781,
+      "margin_per_tok": -0.38674371892755666
+    },
+    {
+      "i": 43,
+      "prompt_tok": 39,
+      "chosen_tok": 31,
+      "rejected_tok": 261,
+      "logp_chosen": -58.15690612792969,
+      "logp_rejected": -387.842529296875,
+      "margin": 329.6856231689453,
+      "margin_per_tok": -0.3900425276463384
+    },
+    {
+      "i": 44,
+      "prompt_tok": 417,
+      "chosen_tok": 27,
+      "rejected_tok": 154,
+      "logp_chosen": -64.22261047363281,
+      "logp_rejected": -334.0203857421875,
+      "margin": 269.7977752685547,
+      "margin_per_tok": -0.209651658946703
+    },
+    {
+      "i": 45,
+      "prompt_tok": 26,
+      "chosen_tok": 33,
+      "rejected_tok": 31,
+      "logp_chosen": -99.8243637084961,
+      "logp_rejected": -92.39007568359375,
+      "margin": -7.434288024902344,
+      "margin_per_tok": -0.04465569638786393
+    },
+    {
+      "i": 46,
+      "prompt_tok": 119,
+      "chosen_tok": 42,
+      "rejected_tok": 10,
+      "logp_chosen": -88.19499969482422,
+      "logp_rejected": -44.08570098876953,
+      "margin": -44.10929870605469,
+      "margin_per_tok": 2.3086891537620904
+    },
+    {
+      "i": 47,
+      "prompt_tok": 24,
+      "chosen_tok": 186,
+      "rejected_tok": 730,
+      "logp_chosen": -404.269287109375,
+      "logp_rejected": -1760.8873291015625,
+      "margin": 1356.6180419921875,
+      "margin_per_tok": 0.2386836325161794
+    },
+    {
+      "i": 48,
+      "prompt_tok": 26,
+      "chosen_tok": 73,
+      "rejected_tok": 327,
+      "logp_chosen": -147.88868713378906,
+      "logp_rejected": -598.1485595703125,
+      "margin": 450.25987243652344,
+      "margin_per_tok": -0.19667193850765408
+    },
+    {
+      "i": 49,
+      "prompt_tok": 21,
+      "chosen_tok": 71,
+      "rejected_tok": 125,
+      "logp_chosen": -157.91871643066406,
+      "logp_rejected": -238.7330322265625,
+      "margin": 80.81431579589844,
+      "margin_per_tok": -0.31434301585882496
+    }
+  ]
+}
